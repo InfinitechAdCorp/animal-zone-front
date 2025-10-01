@@ -23,7 +23,7 @@ export default function AdminLayout({
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-800 rounded-lg flex items-center justify-center">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -33,7 +33,7 @@ export default function AdminLayout({
             </div>
             
             <div className="flex items-center gap-4">
-              <Link href="/" className="text-sm text-gray-600 hover:text-orange-500">
+              <Link href="/" className="text-sm text-gray-600 hover:text-primary-800">
                 Back to Site
               </Link>
             </div>
@@ -49,7 +49,7 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-primary-600 rounded-lg transition-colors"
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-medium">{item.name}</span>

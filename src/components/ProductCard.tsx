@@ -36,21 +36,21 @@ export default function ProductCard({
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [imageError, setImageError] = useState(false)
 
+  console.log("[v0] Product:", name, "Image path:", image, "Error:", imageError)
+
   const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent link navigation
+    e.preventDefault()
     setIsAddingToCart(true)
 
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    // Add to cart logic here
     console.log(`Added product ${id} to cart`)
 
     setIsAddingToCart(false)
   }
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent link navigation
+    e.preventDefault()
     setIsFavorite(!isFavorite)
   }
 
@@ -62,22 +62,26 @@ export default function ProductCard({
 
   return (
     <Link href={`/products/${id}`}>
-      <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer">
+      <div className="group bg-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-border cursor-pointer">
         {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-gray-50">
+        <div className="relative aspect-square overflow-hidden bg-muted">
           {imageError ? (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-              <div className="text-center text-gray-400">
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <div className="text-center text-muted-foreground">
                 <ShoppingCart className="h-16 w-16 mx-auto mb-2" />
                 <p className="text-sm">Product Image</p>
               </div>
             </div>
           ) : (
             <img
-              src={image || "/placeholder.svg"}
+              src={
+                image ||
+                `/placeholder.svg?height=400&width=400&query=${encodeURIComponent(name + " " + category + " product")}`
+              }
               alt={name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               onError={handleImageError}
+              onLoad={() => console.log("[v0] Image loaded successfully:", image)}
             />
           )}
 
@@ -89,32 +93,34 @@ export default function ProductCard({
               </span>
             )}
             {!inStock && (
-              <span className="bg-gray-800 text-white px-2 py-1 rounded-lg text-xs font-semibold">Out of Stock</span>
+              <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-semibold">
+                Out of Stock
+              </span>
             )}
           </div>
 
           {/* Favorite Button */}
           <button
             onClick={handleToggleFavorite}
-            className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-110"
+            className="absolute top-3 right-3 bg-background p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-110"
           >
-            <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+            <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
           </button>
 
           {/* Quick View Overlay */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300" />
+          <div className="absolute inset-0 bg-foreground bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300" />
         </div>
 
         {/* Product Info */}
         <div className="p-4">
           {/* Category & Seller */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-orange-500 font-medium uppercase tracking-wide">{category}</span>
-            <span className="text-xs text-gray-500">by {seller}</span>
+            <span className="text-xs text-primary font-medium uppercase tracking-wide">{category}</span>
+            <span className="text-xs text-muted-foreground">by {seller}</span>
           </div>
 
           {/* Product Name */}
-          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] group-hover:text-orange-500 transition-colors">
+          <h3 className="font-semibold text-foreground mb-2 line-clamp-2 min-h-[3rem] group-hover:text-primary transition-colors">
             {name}
           </h3>
 
@@ -125,21 +131,21 @@ export default function ProductCard({
                 <Star
                   key={i}
                   className={`h-4 w-4 ${
-                    i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "fill-gray-200 text-gray-200"
+                    i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted-foreground">
               {rating} ({reviewCount})
             </span>
           </div>
 
           {/* Price */}
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl font-bold text-gray-900">₱{price.toLocaleString()}</span>
+            <span className="text-2xl font-bold text-foreground">₱{price.toLocaleString()}</span>
             {originalPrice && (
-              <span className="text-sm text-gray-400 line-through">₱{originalPrice.toLocaleString()}</span>
+              <span className="text-sm text-muted-foreground line-through">₱{originalPrice.toLocaleString()}</span>
             )}
           </div>
 
@@ -148,12 +154,14 @@ export default function ProductCard({
             onClick={handleAddToCart}
             disabled={!inStock || isAddingToCart}
             className={`w-full ${
-              inStock ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              inStock
+                ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
             } rounded-xl py-6 font-semibold transition-all duration-300 hover:shadow-lg`}
           >
             {isAddingToCart ? (
               <span className="flex items-center gap-2">
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                <div className="animate-spin h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
                 Adding...
               </span>
             ) : inStock ? (

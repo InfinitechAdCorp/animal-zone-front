@@ -85,17 +85,17 @@ export default function ProductDetailPage() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
-          <Link href="/" className="hover:text-orange-500">
+          <Link href="/" className="hover:text-primary-800">
             Home
           </Link>
           <span>/</span>
-          <Link href="/shop" className="hover:text-orange-500">
+          <Link href="/shop" className="hover:text-primary-800">
             Shop
           </Link>
           <span>/</span>
           <Link
             href={`/shop?category=${productData.category}`}
-            className="hover:text-orange-500"
+            className="hover:text-primary-800"
           >
             {productData.category}
           </Link>
@@ -137,8 +137,8 @@ export default function ProductDetailPage() {
                   onClick={() => setSelectedImage(index)}
                   className={`bg-white rounded-xl overflow-hidden border-2 transition-all ${
                     selectedImage === index
-                      ? "border-orange-500 shadow-md"
-                      : "border-gray-200 hover:border-orange-300"
+                      ? "border-green-800 shadow-md"
+                      : "border-gray-200 hover:border-green-300"
                   }`}
                 >
                   <div className="aspect-square">
@@ -156,7 +156,7 @@ export default function ProductDetailPage() {
           {/* Product Info */}
           <div className="space-y-6">
             {/* Category */}
-            <div className="inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-medium">
+            <div className="inline-block bg-green-800 text-white px-3 py-1 rounded-full text-sm font-medium">
               {productData.category}
             </div>
 
@@ -213,8 +213,8 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-2">
               {productData.inStock ? (
                 <>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-green-600 font-medium">
+                  <div className="w-3 h-3 bg-green-800 rounded-full"></div>
+                  <span className="text-primary-600 font-medium">
                     In Stock ({productData.stock} available)
                   </span>
                 </>
@@ -262,7 +262,7 @@ export default function ProductDetailPage() {
                 <Button
                   onClick={handleAddToCart}
                   disabled={!productData.inStock}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-6 rounded-xl text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="flex-1 bg-green-800 hover:bg-green-600 text-white py-6 rounded-xl text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="mr-2 h-6 w-6" />
                   Add to Cart
@@ -270,13 +270,13 @@ export default function ProductDetailPage() {
                 <Button
                   onClick={() => setIsFavorite(!isFavorite)}
                   variant="outline"
-                  className="border-2 border-orange-500 hover:bg-orange-50 p-6 rounded-xl"
+                  className="border-2 border-green-800 hover:bg-green-50 p-6 rounded-xl"
                 >
                   <Heart
                     className={`h-6 w-6 ${
                       isFavorite
-                        ? "fill-orange-500 text-orange-500"
-                        : "text-orange-500"
+                        ? "fill-green-800 text-primary-800"
+                        : "text-primary-800"
                     }`}
                   />
                 </Button>
@@ -293,17 +293,17 @@ export default function ProductDetailPage() {
             {/* Features/Benefits */}
             <div className="grid grid-cols-3 gap-4 py-6 border-y border-gray-200">
               <div className="text-center">
-                <Truck className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                <Truck className="h-8 w-8 text-primary-800 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-900">Free Delivery</p>
                 <p className="text-xs text-gray-500">Orders over ₱500</p>
               </div>
               <div className="text-center">
-                <Shield className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                <Shield className="h-8 w-8 text-primary-800 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-900">Secure Payment</p>
                 <p className="text-xs text-gray-500">100% Protected</p>
               </div>
               <div className="text-center">
-                <Package className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                <Package className="h-8 w-8 text-primary-800 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-900">Easy Returns</p>
                 <p className="text-xs text-gray-500">7-day return</p>
               </div>
@@ -362,7 +362,7 @@ export default function ProductDetailPage() {
               <ul className="grid sm:grid-cols-2 gap-3">
                 {productData.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="w-2 h-2 bg-green-800 rounded-full mt-2 flex-shrink-0"></div>
                     <span className="text-gray-600">{feature}</span>
                   </li>
                 ))}

@@ -12,7 +12,7 @@ const products = [
     name: "Premium Dog Food - Chicken & Rice Formula",
     price: 1299,
     originalPrice: 1599,
-    image: "/premium-dog-food-bag-chicken-rice.jpg",
+    image: "/premium-dog-food-bag-chicken-rice-formula.jpg",
     rating: 4.5,
     reviewCount: 128,
     category: "Dog Food",
@@ -24,7 +24,7 @@ const products = [
     name: "Cat Litter Box with Hood - Large Size",
     price: 899,
     originalPrice: 1199,
-    image: "/cat-litter-box-with-hood-large.jpg",
+    image: "/cat-litter-box-with-hood-large-size.jpg",
     rating: 4.8,
     reviewCount: 89,
     category: "Cat Supplies",
@@ -35,7 +35,7 @@ const products = [
     id: "3",
     name: "Interactive Dog Toy Set - 5 Pieces",
     price: 599,
-    image: "/interactive-dog-toys-colorful-set.jpg",
+    image: "/interactive-colorful-dog-toys-set.jpg",
     rating: 4.3,
     reviewCount: 56,
     category: "Toys",
@@ -58,7 +58,7 @@ const products = [
     id: "5",
     name: "Bird Cage Deluxe - Stainless Steel",
     price: 3499,
-    image: "/deluxe-bird-cage-stainless-steel.jpg",
+    image: "/deluxe-stainless-steel-bird-cage.jpg",
     rating: 4.7,
     reviewCount: 32,
     category: "Bird Supplies",
@@ -70,7 +70,7 @@ const products = [
     name: "Organic Cat Food - Salmon Formula",
     price: 1099,
     originalPrice: 1399,
-    image: "/organic-cat-food-salmon-formula.jpg",
+    image: "/organic-cat-food-salmon-formula-bag.jpg",
     rating: 4.9,
     reviewCount: 156,
     category: "Cat Food",
@@ -107,10 +107,10 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 py-12">
+      <div className="bg-gradient-to-r from-green-800 to-green-600 py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold text-white mb-2">Shop All Products</h1>
-          <p className="text-orange-100">Discover premium pet supplies from verified sellers</p>
+          <p className="text-white">Discover premium pet supplies from verified sellers</p>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default function ShopPage() {
             <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-                <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                <Button variant="ghost" size="sm" className="text-primary-800 hover:text-primary-600">
                   Clear All
                 </Button>
               </div>
@@ -136,7 +136,7 @@ export default function ShopPage() {
                       onClick={() => setSelectedCategory(category)}
                       className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
                         selectedCategory === category
-                          ? "bg-orange-50 text-orange-600 font-medium"
+                          ? "bg-green-50 text-primary font-medium"
                           : "text-gray-600 hover:bg-gray-50"
                       }`}
                     >
@@ -170,11 +170,11 @@ export default function ShopPage() {
                 <h3 className="font-semibold text-gray-900 mb-3">Availability</h3>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded border-gray-300 text-orange-500 focus:ring-orange-500" />
+                    <input type="checkbox" className="rounded border-gray-300 text-primary-800 focus:ring-green-800" />
                     <span className="text-gray-600">In Stock</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded border-gray-300 text-orange-500 focus:ring-orange-500" />
+                    <input type="checkbox" className="rounded border-gray-300 text-primary-800 focus:ring-green-800" />
                     <span className="text-gray-600">Out of Stock</span>
                   </label>
                 </div>
@@ -207,7 +207,7 @@ export default function ShopPage() {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent cursor-pointer"
+                      className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent cursor-pointer"
                     >
                       {sortOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -234,7 +234,7 @@ export default function ShopPage() {
                 <Button variant="outline" disabled>
                   Previous
                 </Button>
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white">1</Button>
+                <Button className="bg-green-800 hover:bg-green-600 text-white">1</Button>
                 <Button variant="outline">2</Button>
                 <Button variant="outline">3</Button>
                 <Button variant="outline">Next</Button>
