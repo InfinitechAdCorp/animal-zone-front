@@ -1,83 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import ProductCard from "@/components/ProductCard"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, SlidersHorizontal } from "lucide-react"
-
-// Sample product data - replace with API call
-const products = [
-  {
-    id: "1",
-    name: "Premium Dog Food - Chicken & Rice Formula",
-    price: 1299,
-    originalPrice: 1599,
-    image: "/premium-dog-food-bag-chicken-rice-formula.jpg",
-    rating: 4.5,
-    reviewCount: 128,
-    category: "Dog Food",
-    inStock: true,
-    seller: "PetMart Store",
-  },
-  {
-    id: "2",
-    name: "Cat Litter Box with Hood - Large Size",
-    price: 899,
-    originalPrice: 1199,
-    image: "/cat-litter-box-with-hood-large-size.jpg",
-    rating: 4.8,
-    reviewCount: 89,
-    category: "Cat Supplies",
-    inStock: true,
-    seller: "Feline Friends",
-  },
-  {
-    id: "3",
-    name: "Interactive Dog Toy Set - 5 Pieces",
-    price: 599,
-    image: "/interactive-colorful-dog-toys-set.jpg",
-    rating: 4.3,
-    reviewCount: 56,
-    category: "Toys",
-    inStock: true,
-    seller: "PlayPet Shop",
-  },
-  {
-    id: "4",
-    name: "Aquarium Filter System - 50 Gallon",
-    price: 2499,
-    originalPrice: 2999,
-    image: "/aquarium-filter-system-50-gallon.jpg",
-    rating: 4.6,
-    reviewCount: 43,
-    category: "Fish Supplies",
-    inStock: false,
-    seller: "AquaPro",
-  },
-  {
-    id: "5",
-    name: "Bird Cage Deluxe - Stainless Steel",
-    price: 3499,
-    image: "/deluxe-stainless-steel-bird-cage.jpg",
-    rating: 4.7,
-    reviewCount: 32,
-    category: "Bird Supplies",
-    inStock: true,
-    seller: "Avian Paradise",
-  },
-  {
-    id: "6",
-    name: "Organic Cat Food - Salmon Formula",
-    price: 1099,
-    originalPrice: 1399,
-    image: "/organic-cat-food-salmon-formula-bag.jpg",
-    rating: 4.9,
-    reviewCount: 156,
-    category: "Cat Food",
-    inStock: true,
-    seller: "Whiskers & Co",
-  },
-]
 
 const categories = [
   "All Products",
@@ -99,10 +25,25 @@ const sortOptions = [
 ]
 
 export default function ShopPage() {
+  const [products, setProducts] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState("All Products")
   const [sortBy, setSortBy] = useState("featured")
   const [showFilters, setShowFilters] = useState(false)
   const [priceRange, setPriceRange] = useState([0, 5000])
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products`)
+        const data = await res.json()
+        setProducts(data)
+      } catch (err) {
+        console.error("Failed to fetch products:", err)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -222,9 +163,22 @@ export default function ShopPage() {
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
-                <ProductCard key={product.id} {...product} />
+                <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                    image={product.images?.[0] ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/${product.images[0]}` : "/placeholder.png"}
+                    category={product.category}
+                    seller={product.seller}
+                    inStock={product.stock > 0}
+                    rating={0}
+                    reviewCount={0}
+                  />
+
+
               ))}
             </div>
 

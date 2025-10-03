@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   ShoppingCart,
@@ -16,68 +17,55 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// Sample product data - replace with API call
-const productData = {
-  id: "1",
-  name: "Premium Dog Food - Chicken & Rice Formula",
-  price: 1299,
-  originalPrice: 1599,
-  images: [
-    "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800",
-    "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800",
-    "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?w=800",
-  ],
-  rating: 4.5,
-  reviewCount: 128,
-  category: "Dog Food",
-  inStock: true,
-  stock: 45,
-  seller: {
-    name: "PetMart Store",
-    rating: 4.8,
-    products: 234,
-    location: "Quezon City, Metro Manila",
-  },
-  description:
-    "Give your furry friend the nutrition they deserve with our Premium Dog Food. Made with real chicken as the first ingredient and wholesome brown rice, this formula is specially crafted to support your dog's overall health and vitality. Rich in protein, vitamins, and minerals, it promotes healthy skin, a shiny coat, and strong muscles.",
-  features: [
-    "Real chicken as the first ingredient",
-    "No artificial colors, flavors, or preservatives",
-    "Rich in protein for strong muscles",
-    "Omega fatty acids for healthy skin and coat",
-    "Fortified with vitamins and minerals",
-    "Suitable for adult dogs of all breeds",
-  ],
-  specifications: {
-    Weight: "5kg",
-    "Protein Content": "26%",
-    "Fat Content": "15%",
-    "Crude Fiber": "4%",
-    "Age Range": "Adult (1-7 years)",
-    "Made In": "Philippines",
-  },
-};
-
 export default function ProductDetailPage() {
+  const { id } = useParams(); // get /products/[id] param
+  const [product, setProduct] = useState<any | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const discountPercentage = Math.round(
-    ((productData.originalPrice - productData.price) / productData.originalPrice) *
-      100
-  );
+  // Fetch product dynamically
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${id}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch product");
+        const data = await res.json();
+        setProduct(data);
+      } catch (err) {
+        console.error("Error fetching product:", err);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Loading product...
+      </div>
+    );
+  }
+
+  const discountPercentage = product.originalPrice
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0;
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= productData.stock) {
+    if (newQuantity >= 1 && newQuantity <= product.stock) {
       setQuantity(newQuantity);
     }
   };
 
   const handleAddToCart = () => {
-    console.log(`Adding ${quantity} items to cart`);
-    // Add to cart logic here
+    console.log(`Adding ${quantity} of ${product.name} to cart`);
+    // integrate cart API here
   };
 
   return (
@@ -85,33 +73,29 @@ export default function ProductDetailPage() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
-          <Link href="/" className="hover:text-primary-800">
-            Home
+          <Link href="/" className="hover:text-primary-800">Home</Link>
+          <span>/</span>
+          <Link href="/products" className="hover:text-primary-800">Products</Link>
+          <span>/</span>
+          <Link href={`/products?category=${product.category}`} className="hover:text-primary-800">
+            {product.category}
           </Link>
           <span>/</span>
-          <Link href="/shop" className="hover:text-primary-800">
-            Shop
-          </Link>
-          <span>/</span>
-          <Link
-            href={`/shop?category=${productData.category}`}
-            className="hover:text-primary-800"
-          >
-            {productData.category}
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium">{productData.name}</span>
+          <span className="text-gray-900 font-medium">{product.name}</span>
         </nav>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery */}
           <div>
-            {/* Main Image */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
               <div className="aspect-square relative">
                 <img
-                  src={productData.images[selectedImage]}
-                  alt={productData.name}
+                  src={
+                    product.images?.[selectedImage]
+                      ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/${product.images[selectedImage]}`
+                      : "/placeholder.png"
+                  }
+                  alt={product.name}
                   className="w-full h-full object-cover"
                 />
                 {discountPercentage > 0 && (
@@ -119,7 +103,7 @@ export default function ProductDetailPage() {
                     -{discountPercentage}%
                   </span>
                 )}
-                {!productData.inStock && (
+                {!product.inStock && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <span className="bg-gray-800 text-white px-6 py-3 rounded-lg text-lg font-bold">
                       Out of Stock
@@ -129,9 +113,9 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Thumbnail Images */}
+            {/* Thumbnails */}
             <div className="grid grid-cols-3 gap-4">
-              {productData.images.map((image, index) => (
+              {product.images?.map((image: string, index: number) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
@@ -143,8 +127,8 @@ export default function ProductDetailPage() {
                 >
                   <div className="aspect-square">
                     <img
-                      src={image}
-                      alt={`${productData.name} view ${index + 1}`}
+                      src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${image}`}
+                      alt={`${product.name} view ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -155,17 +139,15 @@ export default function ProductDetailPage() {
 
           {/* Product Info */}
           <div className="space-y-6">
-            {/* Category */}
             <div className="inline-block bg-green-800 text-white px-3 py-1 rounded-full text-sm font-medium">
-              {productData.category}
+              {product.category}
             </div>
 
-            {/* Product Name */}
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              {productData.name}
+              {product.name}
             </h1>
 
-            {/* Rating & Reviews */}
+            {/* Rating */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="flex">
@@ -173,31 +155,27 @@ export default function ProductDetailPage() {
                     <Star
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.floor(productData.rating)
+                        i < Math.floor(product.rating)
                           ? "fill-yellow-400 text-yellow-400"
                           : "fill-gray-200 text-gray-200"
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-gray-900 font-semibold">
-                  {productData.rating}
-                </span>
+                <span className="text-gray-900 font-semibold">{product.rating}</span>
               </div>
-              <span className="text-gray-500">
-                ({productData.reviewCount} reviews)
-              </span>
+              <span className="text-gray-500">({product.reviewCount} reviews)</span>
             </div>
 
             {/* Price */}
             <div className="bg-gray-50 rounded-2xl p-6">
               <div className="flex items-baseline gap-3 mb-2">
                 <span className="text-4xl font-bold text-gray-900">
-                  ₱{productData.price.toLocaleString()}
+                  ₱{product.price.toLocaleString()}
                 </span>
-                {productData.originalPrice && (
+                {product.originalPrice && (
                   <span className="text-xl text-gray-400 line-through">
-                    ₱{productData.originalPrice.toLocaleString()}
+                    ₱{product.originalPrice.toLocaleString()}
                   </span>
                 )}
                 {discountPercentage > 0 && (
@@ -209,13 +187,13 @@ export default function ProductDetailPage() {
               <p className="text-gray-600 text-sm">Inclusive of all taxes</p>
             </div>
 
-            {/* Stock Status */}
+            {/* Stock */}
             <div className="flex items-center gap-2">
-              {productData.inStock ? (
+              {product.inStock ? (
                 <>
                   <div className="w-3 h-3 bg-green-800 rounded-full"></div>
                   <span className="text-primary-600 font-medium">
-                    In Stock ({productData.stock} available)
+                    In Stock ({product.stock} available)
                   </span>
                 </>
               ) : (
@@ -226,7 +204,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Quantity Selector & Add to Cart */}
+            {/* Quantity + Add to Cart */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -246,14 +224,14 @@ export default function ProductDetailPage() {
                     </span>
                     <button
                       onClick={() => handleQuantityChange(1)}
-                      disabled={quantity >= productData.stock}
+                      disabled={quantity >= product.stock}
                       className="p-3 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Plus className="h-5 w-5" />
                     </button>
                   </div>
                   <span className="text-gray-600">
-                    Subtotal: ₱{(productData.price * quantity).toLocaleString()}
+                    Subtotal: ₱{(product.price * quantity).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -261,7 +239,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-4">
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!productData.inStock}
+                  disabled={!product.inStock}
                   className="flex-1 bg-green-800 hover:bg-green-600 text-white py-6 rounded-xl text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="mr-2 h-6 w-6" />
@@ -274,131 +252,49 @@ export default function ProductDetailPage() {
                 >
                   <Heart
                     className={`h-6 w-6 ${
-                      isFavorite
-                        ? "fill-green-800 text-primary-800"
-                        : "text-primary-800"
+                      isFavorite ? "fill-green-800 text-green-800" : "text-green-800"
                     }`}
                   />
                 </Button>
               </div>
-
-              <Button
-                variant="outline"
-                className="w-full border-2 border-gray-300 py-6 rounded-xl text-lg font-semibold"
-              >
-                Buy Now
-              </Button>
             </div>
 
-            {/* Features/Benefits */}
-            <div className="grid grid-cols-3 gap-4 py-6 border-y border-gray-200">
-              <div className="text-center">
-                <Truck className="h-8 w-8 text-primary-800 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-900">Free Delivery</p>
-                <p className="text-xs text-gray-500">Orders over ₱500</p>
-              </div>
-              <div className="text-center">
-                <Shield className="h-8 w-8 text-primary-800 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-900">Secure Payment</p>
-                <p className="text-xs text-gray-500">100% Protected</p>
-              </div>
-              <div className="text-center">
-                <Package className="h-8 w-8 text-primary-800 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-900">Easy Returns</p>
-                <p className="text-xs text-gray-500">7-day return</p>
-              </div>
-            </div>
-
-            {/* Seller Info */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Store className="h-5 w-5 text-gray-600" />
-                    <h3 className="font-bold text-lg text-gray-900">
-                      {productData.seller.name}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span>{productData.seller.rating}</span>
+            {/* Seller */}
+            {product.seller && (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Store className="h-5 w-5 text-gray-600" />
+                      <h3 className="font-bold text-lg text-gray-900">
+                        {product.seller.name}
+                      </h3>
                     </div>
-                    <span>{productData.seller.products} Products</span>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span>{product.seller.rating}</span>
+                      </div>
+                      <span>{product.seller.products} Products</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
+                      <MapPin className="h-4 w-4" />
+                      <span>{product.seller.location}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
-                    <MapPin className="h-4 w-4" />
-                    <span>{productData.seller.location}</span>
-                  </div>
+                  <Link href={`/sellers/${product.seller.id || ""}`}>
+                    <Button variant="outline" size="sm">Visit Store</Button>
+                  </Link>
                 </div>
-                <Link href={`/sellers/${productData.id}`}>
-                  <Button variant="outline" size="sm">
-                    Visit Store
-                  </Button>
-                </Link>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Product Details Tabs */}
-        <div className="mt-12">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {/* Description */}
-            <div className="p-8 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Product Description
-              </h2>
-              <p className="text-gray-600 leading-relaxed">
-                {productData.description}
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="p-8 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Key Features
-              </h2>
-              <ul className="grid sm:grid-cols-2 gap-3">
-                {productData.features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-green-800 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Specifications */}
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Specifications
-              </h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {Object.entries(productData.specifications).map(
-                  ([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex justify-between py-3 border-b border-gray-100"
-                    >
-                      <span className="font-medium text-gray-900">{key}</span>
-                      <span className="text-gray-600">{value}</span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Related Products */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            You May Also Like
-          </h2>
-          <p className="text-gray-600 text-center py-8">
-            Related products section - use ProductCard component here
-          </p>
+        {/* Description */}
+        <div className="mt-12 bg-white rounded-2xl shadow-sm p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Description</h2>
+          <p className="text-gray-600 leading-relaxed">{product.description}</p>
         </div>
       </div>
     </div>

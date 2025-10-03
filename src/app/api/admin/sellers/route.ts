@@ -1,33 +1,21 @@
-// import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-// const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-// export async function GET(request: NextRequest) {
-//   const searchParams = request.nextUrl.searchParams;
-//   const status = searchParams.get('status') || 'all';
+export async function GET(req: NextRequest) {
+  const status = req.nextUrl.searchParams.get("status") || "all";
 
-//   try {
-//     const response = await fetch(`${BACKEND_URL}/api/admin/sellers?status=${status}`, {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//     });
+  // get token from cookies or localStorage (server side mas ok via cookies)
+  const token = req.cookies.get("authToken")?.value || "";
 
-//     const data = await response.json();
+  const res = await fetch(`${BACKEND_URL}/api/sellers?status=${status}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+  });
 
-//     if (!response.ok) {
-//       return NextResponse.json(
-//         { message: data.message || 'Failed to fetch sellers' },
-//         { status: response.status }
-//       );
-//     }
-
-//     return NextResponse.json(data);
-//   } catch (error: any) {
-//     return NextResponse.json(
-//       { message: error.message || 'Internal server error' },
-//       { status: 500 }
-//     );
-//   }
-// }
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
+}

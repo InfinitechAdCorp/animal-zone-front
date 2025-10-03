@@ -1,13 +1,17 @@
 // app/(admin)/layout.tsx
+"use client";
 
 import { Shield, Users, Package, FileCheck, BarChart3, Settings } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   const navItems = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
     { name: "Review Panel", href: "/admin/review", icon: FileCheck },
@@ -45,16 +49,23 @@ export default function AdminLayout({
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16">
           <nav className="p-4 space-y-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-primary-600 rounded-lg transition-colors"
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.name}</span>
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                    ${isActive 
+                      ? "bg-green-100 text-green-800 font-semibold" 
+                      : "text-gray-700 hover:bg-green-50 hover:text-primary-600"}`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
           </nav>
         </aside>
 
