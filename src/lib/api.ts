@@ -309,3 +309,22 @@ export async function updateProductStatus(id: number, status: string, token: str
   return res.json();
 }
 
+// ---------------- ORDER HISTORY (BUYER SIDE) ----------------
+export async function getOrderHistory(token: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/orders`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new Error(errorData.message || `Failed to fetch orders: ${res.status}`)
+  }
+
+  return res.json()
+}

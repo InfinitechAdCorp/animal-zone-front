@@ -30,7 +30,7 @@ export default function Navigation() {
     setIsMenuOpen(false)
   }, [pathname])
 
-  // Escape key close
+  // Escape key closes menu
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsMenuOpen(false)
@@ -61,6 +61,7 @@ export default function Navigation() {
     { href: "/shop", label: "Shop" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact Us" },
+    ...(user ? [{ href: "/order-history", label: "Order History" }] : []),
   ]
 
   const handleLogout = () => {
@@ -129,14 +130,10 @@ export default function Navigation() {
               </Button>
             </Link>
 
-
             {/* If logged in */}
             {user ? (
               <>
-                <Link
-                  href="/edit-profile"
-                  className="relative group"
-                >
+                <Link href="/edit-profile" className="relative group">
                   <span className="text-sm text-muted-foreground bg-accent/50 px-3 py-1.5 rounded-full cursor-pointer hover:bg-accent hover:text-primary transition-all duration-200 select-none">
                     Hi, {user.name}
                   </span>
@@ -178,7 +175,7 @@ export default function Navigation() {
 
           {/* Mobile Buttons */}
           <div className="flex md:hidden items-center space-x-2">
-           <Link href="/cart">
+            <Link href="/cart">
               <Button
                 variant="ghost"
                 size="icon"
@@ -201,7 +198,6 @@ export default function Navigation() {
                 )}
               </Button>
             </Link>
-
 
             <button
               className="p-2 hover:bg-accent rounded-md transition-colors"
@@ -240,10 +236,7 @@ export default function Navigation() {
                 {user ? (
                   <>
                     <Link href="/edit-profile" onClick={() => setIsMenuOpen(false)}>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-center hover:bg-accent"
-                      >
+                      <Button variant="outline" className="w-full justify-center hover:bg-accent">
                         View Profile
                       </Button>
                     </Link>
