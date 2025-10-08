@@ -3,15 +3,16 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, User, Search, Menu, X, LogOut } from "lucide-react"
+import { ShoppingCart, User, Menu, X, LogOut } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useCart } from "@/context/CartContext"
 
 export default function Navigation() {
+  const { cartCount } = useCart()
   const pathname = usePathname()
   const router = useRouter()
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [cartCount, setCartCount] = useState(0)
   const [isScrolled, setIsScrolled] = useState(false)
   const [user, setUser] = useState<any>(null)
 
@@ -65,6 +66,7 @@ export default function Navigation() {
   const handleLogout = () => {
     localStorage.removeItem("authToken")
     localStorage.removeItem("user")
+    localStorage.removeItem("cartCount")
     setUser(null)
     router.push("/login")
   }
@@ -104,8 +106,21 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
             {/* Cart */}
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative hover:bg-accent">
-                <ShoppingCart className="h-5 w-5 xl:h-6 xl:w-6 text-muted-foreground" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`relative hover:bg-accent transition-colors ${
+                  pathname === "/cart"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground"
+                }`}
+                data-cart-icon
+              >
+                <ShoppingCart
+                  className={`h-5 w-5 xl:h-6 xl:w-6 transition-colors ${
+                    pathname === "/cart" ? "text-primary" : "text-muted-foreground"
+                  }`}
+                />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 xl:h-5 xl:w-5 flex items-center justify-center font-semibold">
                     {cartCount}
@@ -114,10 +129,22 @@ export default function Navigation() {
               </Button>
             </Link>
 
+
             {/* If logged in */}
             {user ? (
               <>
-                <span className="text-sm text-muted-foreground">Hi, {user.name}</span>
+                <Link
+                  href="/edit-profile"
+                  className="relative group"
+                >
+                  <span className="text-sm text-muted-foreground bg-accent/50 px-3 py-1.5 rounded-full cursor-pointer hover:bg-accent hover:text-primary transition-all duration-200 select-none">
+                    Hi, {user.name}
+                  </span>
+                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[11px] text-muted-foreground bg-popover px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    View Profile
+                  </span>
+                </Link>
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -151,9 +178,22 @@ export default function Navigation() {
 
           {/* Mobile Buttons */}
           <div className="flex md:hidden items-center space-x-2">
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative hover:bg-accent h-9 w-9">
-                <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+           <Link href="/cart">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`relative h-9 w-9 hover:bg-accent transition-colors ${
+                  pathname === "/cart"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground"
+                }`}
+                data-cart-icon
+              >
+                <ShoppingCart
+                  className={`h-5 w-5 transition-colors ${
+                    pathname === "/cart" ? "text-primary" : "text-muted-foreground"
+                  }`}
+                />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
                     {cartCount}
@@ -161,6 +201,8 @@ export default function Navigation() {
                 )}
               </Button>
             </Link>
+
+
             <button
               className="p-2 hover:bg-accent rounded-md transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -197,12 +239,15 @@ export default function Navigation() {
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    <span className="text-sm text-muted-foreground px-3">Hi, {user.name}</span>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-center"
-                      onClick={handleLogout}
-                    >
+                    <Link href="/edit-profile" onClick={() => setIsMenuOpen(false)}>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center hover:bg-accent"
+                      >
+                        View Profile
+                      </Button>
+                    </Link>
+                    <Button variant="outline" className="w-full justify-center" onClick={handleLogout}>
                       <LogOut className="h-5 w-5 mr-2" />
                       Logout
                     </Button>

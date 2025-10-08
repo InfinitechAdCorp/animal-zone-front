@@ -3,11 +3,13 @@
 import type React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Heart, Star } from "lucide-react"
+import { ShoppingCart, Star, Plus, Minus } from "lucide-react"
 import { useState } from "react"
+import AddToCartButton from "@/components/AddToCartButton"
 
 interface ProductCardProps {
   id: string
+  slug: string
   name: string
   price: number
   originalPrice?: number
@@ -17,11 +19,13 @@ interface ProductCardProps {
   category: string
   inStock: boolean
   seller: string
+  stock?: number
 }
 
 export default function ProductCard({
   id,
   name,
+  slug,
   price,
   originalPrice,
   image,
@@ -30,26 +34,19 @@ export default function ProductCard({
   category,
   inStock,
   seller,
+  stock = 10, // fallback value if not passed
 }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [quantity, setQuantity] = useState(1)
   const [imageError, setImageError] = useState(false)
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsAddingToCart(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    console.log(`Added product ${id} to cart`)
-    setIsAddingToCart(false)
-  }
+  const handleImageError = () => setImageError(true)
 
-  const handleToggleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsFavorite(!isFavorite)
-  }
-
-  const handleImageError = () => {
-    setImageError(true)
+  const handleQuantityChange = (change: number) => {
+    const newQty = quantity + change
+    if (newQty >= 1 && newQty <= stock) {
+      setQuantity(newQty)
+    }
   }
 
   const discountPercentage = originalPrice
@@ -58,16 +55,16 @@ export default function ProductCard({
 
   return (
     <Link
-      href={`/products/${id}`}
+      href={`/products/${slug}`}
       className="group bg-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-border cursor-pointer"
     >
-      {/* Image Container */}
-      <div className="relative w-full aspect-square overflow-hidden">
+      {/* Image */}
+      <div className="relative w-full h-64 flex items-center justify-center overflow-hidden bg-gray-50">
         {!imageError ? (
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="h-full w-auto object-contain group-hover:scale-105 transition-transform duration-300"
             onError={handleImageError}
           />
         ) : (
@@ -75,6 +72,7 @@ export default function ProductCard({
             No Image
           </div>
         )}
+
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -90,20 +88,11 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Favorite Button */}
-        <button
-          onClick={handleToggleFavorite}
-          className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-110"
-        >
-          <Heart
-            className={`h-5 w-5 ${
-              isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-            }`}
-          />
-        </button>
+        {/* Favorite */}
+       
       </div>
 
-      {/* Product Info */}
+      {/* Info */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-primary font-medium uppercase tracking-wide">
@@ -116,6 +105,7 @@ export default function ProductCard({
           {name}
         </h3>
 
+        {/* Rating */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
@@ -134,6 +124,7 @@ export default function ProductCard({
           </span>
         </div>
 
+        {/* Price */}
         <div className="flex items-center gap-2 mb-4">
           <span className="text-2xl font-bold text-foreground">
             ₱{price.toLocaleString()}
@@ -145,29 +136,47 @@ export default function ProductCard({
           )}
         </div>
 
-        <Button
-          onClick={handleAddToCart}
-          disabled={!inStock || isAddingToCart}
-          className={`w-full ${
-            inStock
-              ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
-          } rounded-xl py-6 font-semibold transition-all duration-300 hover:shadow-lg`}
-        >
-          {isAddingToCart ? (
-            <span className="flex items-center gap-2">
-              <div className="animate-spin h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
-              Adding...
-            </span>
-          ) : inStock ? (
-            <span className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Add to Cart
-            </span>
-          ) : (
-            "Out of Stock"
-          )}
-        </Button>
+        {/* Quantity Selector */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              handleQuantityChange(-1)
+            }}
+            disabled={quantity <= 1}
+            className="p-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+          <span className="font-semibold text-lg w-6 text-center">{quantity}</span>
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              handleQuantityChange(1)
+            }}
+            disabled={quantity >= stock}
+            className="p-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Add to Cart */}
+        {inStock ? (
+          <AddToCartButton
+            productId={Number(id)}
+            quantity={quantity}
+            disabled={!inStock}
+            className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl py-6 font-semibold transition-all duration-300 hover:shadow-lg"
+          />
+        ) : (
+          <Button
+            disabled
+            className="w-full bg-muted text-muted-foreground cursor-not-allowed rounded-xl py-6"
+          >
+            Out of Stock
+          </Button>
+        )}
       </div>
     </Link>
   )

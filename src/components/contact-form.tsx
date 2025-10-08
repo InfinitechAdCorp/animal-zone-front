@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, Phone, MapPin, Send } from "lucide-react"
+import emailjs from "emailjs-com"
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -17,16 +18,31 @@ export default function ContactForm() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    console.log("Form submitted:", formData)
-    setIsSubmitting(false)
-    // Reset form
-    setFormData({ name: "", email: "", subject: "", message: "" })
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsSubmitting(true)
+
+  try {
+    const res = await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+
+    if (res.ok) {
+      alert("✅ Message sent successfully!")
+      setFormData({ name: "", email: "", subject: "", message: "" })
+    } else {
+      alert("❌ Failed to send message. Please try again later.")
+    }
+  } catch (error) {
+    console.error("Error sending message:", error)
+    alert("❌ Network error. Please try again.")
   }
+
+  setIsSubmitting(false)
+}
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({

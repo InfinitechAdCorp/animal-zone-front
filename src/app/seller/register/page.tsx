@@ -1,8 +1,6 @@
 "use client"
-
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -11,20 +9,42 @@ import { Eye, EyeOff, X, Store, TrendingUp, Shield, Users, Sparkles, CheckCircle
 import { toast } from "sonner"
 import { registerSeller } from "@/lib/api"
 
+// Philippine Location Data
+// ✅ Corrected imports — match your file names exactly
+import { regions } from "@/data/region"
+import { provinces } from "@/data/province"
+import { cities } from "@/data/cities"
+import { barangay } from "@/data/barangay"
+
+
+
 const steps = ["Account Info", "Business Info", "Verification Documents", "Review & Submit"]
 
 export default function SellerRegisterPage() {
+  const [filteredBarangays, setFilteredBarangays] = useState([])
   const [step, setStep] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  
+  // Location state
+  const [selectedRegion, setSelectedRegion] = useState("")
+  const [selectedProvince, setSelectedProvince] = useState("")
+  const [selectedCity, setSelectedCity] = useState("")
+  const [filteredProvinces, setFilteredProvinces] = useState([])
+  const [filteredCities, setFilteredCities] = useState([])
+  
   const [form, setForm] = useState({
     name: "",
     email: "",
     contactNumber: "",
     password: "",
     confirmPassword: "",
+    region: "",
+    province: "",
+    city: "",
+    barangay: "",
+    streetAddress: "",
     companyName: "",
     governmentIdType: "",
     governmentId: null as File | null,
@@ -37,6 +57,63 @@ export default function SellerRegisterPage() {
     fdaCertificate: null as File | null,
     productLabels: null as File | null,
   })
+
+  // Update filtered provinces when region changes
+  useEffect(() => {
+    if (selectedRegion) {
+      const region = regions.find(r => r.region_code === selectedRegion)
+      if (region) {
+        const provinceList = provinces.filter(p => p.region_code === region.region_code)
+        setFilteredProvinces(provinceList)
+        setSelectedProvince("")
+        setSelectedCity("")
+        setFilteredCities([])
+        setForm(prev => ({ ...prev, region: region.region_name, province: "", city: "" }))
+      }
+    } else {
+      setFilteredProvinces([])
+      setSelectedProvince("")
+      setSelectedCity("")
+      setFilteredCities([])
+    }
+  }, [selectedRegion])
+
+
+  // Update filtered cities when province changes
+  useEffect(() => {
+    if (selectedProvince) {
+      const province = provinces.find(p => p.province_code === selectedProvince)
+      if (province) {
+        const cityList = cities.filter(c => c.province_code === province.province_code)
+        setFilteredCities(cityList)
+        setSelectedCity("")
+        setForm(prev => ({ ...prev, province: province.province_name, city: "" }))
+      }
+    } else {
+      setFilteredCities([])
+      setSelectedCity("")
+    }
+  }, [selectedProvince])
+
+  // Update city in form when selected
+  useEffect(() => {
+    if (selectedCity) {
+      const city = cities.find(c => c.city_code === selectedCity)
+      if (city) {
+        setForm(prev => ({ ...prev, city: city.city_name }))
+      }
+    }
+  }, [selectedCity])
+
+  useEffect(() => {
+  if (selectedCity) {
+    const cityBarangays = barangay.filter(b => b.city_code === selectedCity)
+    setFilteredBarangays(cityBarangays)
+    setForm(prev => ({ ...prev, barangay: "" }))
+  } else {
+    setFilteredBarangays([])
+  }
+}, [selectedCity])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, files } = e.target as HTMLInputElement
@@ -70,7 +147,14 @@ export default function SellerRegisterPage() {
         toast.error("Please fill in all account information fields")
         return
       }
-      // Email validation
+      if (!form.region || !form.province || !form.city) {
+        toast.error("Please select your complete location (Region, Province, City)")
+        return
+      }
+      if (!form.streetAddress) {
+        toast.error("Please enter your street address")
+        return
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(form.email)) {
         toast.error("Please enter a valid email address")
@@ -94,7 +178,6 @@ export default function SellerRegisterPage() {
         toast.error("Please select at least one business permit type")
         return
       }
-      // Check if files are uploaded for selected permit types
       if (form.businessPermitTypes.includes("DTI/SEC") && !form.dtiSec) {
         toast.error("Please upload DTI/SEC document")
         return
@@ -128,22 +211,21 @@ export default function SellerRegisterPage() {
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true)
-
     const formData = new FormData()
     formData.append("name", form.name)
     formData.append("email", form.email)
     const formattedNumber = form.contactNumber ? "0" + form.contactNumber : ""
-
     formData.append("contact_number", formattedNumber)
-
     formData.append("password", form.password)
     formData.append("password_confirmation", form.password)
+    formData.append("region", form.region)
+    formData.append("province", form.province)
+    formData.append("city", form.city)
+    formData.append("barangay", form.barangay)
+    formData.append("street_address", form.streetAddress)
     formData.append("company_name", form.companyName)
     formData.append("gov_id_type", form.governmentIdType)
-
-    // Business permit types as JSON array
     formData.append("business_permit_types", JSON.stringify(form.businessPermitTypes))
-
     if (form.dtiSec) formData.append("dti_sec", form.dtiSec)
     if (form.mayorsPermit) formData.append("mayors_permit", form.mayorsPermit)
     if (form.birCertificate) formData.append("bir_certificate", form.birCertificate)
@@ -159,13 +241,17 @@ export default function SellerRegisterPage() {
       toast.success("Seller registered successfully. Your account is under review. Please check your email to verify your email address before logging in.", {
         duration: 5000,
       })
-
       setForm({
         name: "",
         email: "",
         contactNumber: "",
         password: "",
         confirmPassword: "",
+        region: "",
+        province: "",
+        city: "",
+        barangay: "",
+        streetAddress: "",
         companyName: "",
         governmentIdType: "",
         governmentId: null,
@@ -178,7 +264,9 @@ export default function SellerRegisterPage() {
         fdaCertificate: null,
         productLabels: null,
       })
-
+      setSelectedRegion("")
+      setSelectedProvince("")
+      setSelectedCity("")
       setStep(0)
     } catch (err: any) {
       console.error("❌ Error:", err)
@@ -202,25 +290,25 @@ export default function SellerRegisterPage() {
     name: string
     file: File | null
   }) => (
-    <div>
+    <div className="space-y-2">
       <Label htmlFor={id} className="text-sm font-medium text-gray-700">
         {label}
       </Label>
-      <div className="flex gap-2 mt-1.5">
+      <div className="flex gap-2">
         <Input
           id={id}
           name={name}
           type="file"
-          onChange={handleChange}
           accept="image/*,.pdf"
-          className="flex-1 border-gray-300 focus:border-green-500 focus:ring-green-500"
+          onChange={handleChange}
+          className="flex-1"
         />
         {file && (
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Button
               type="button"
+              size="sm"
               variant="outline"
-              size="icon"
               onClick={() => handleFileView(file)}
               title="View file"
               className="border-green-600 text-green-700 hover:bg-green-50"
@@ -229,8 +317,8 @@ export default function SellerRegisterPage() {
             </Button>
             <Button
               type="button"
+              size="sm"
               variant="outline"
-              size="icon"
               onClick={() => handleFileRemove(name)}
               title="Remove file"
               className="border-red-300 text-red-600 hover:bg-red-50"
@@ -241,8 +329,8 @@ export default function SellerRegisterPage() {
         )}
       </div>
       {file && (
-        <p className="text-xs text-green-700 mt-1.5 flex items-center">
-          <CheckCircle2 className="inline h-3 w-3 mr-1" />
+        <p className="text-xs text-gray-500">
+          <CheckCircle2 className="inline h-3 w-3 mr-1 text-green-600" />
           {file.name}
         </p>
       )}
@@ -250,105 +338,97 @@ export default function SellerRegisterPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-      <div className="bg-gradient-to-r from-green-800 to-emerald-700 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full px-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4 backdrop-blur-sm">
-              <Store className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-green-700 to-green-900 text-white py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 rounded-full mb-4">
+              <Store className="h-10 w-10" />
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-balance">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Start Selling on Animal Zone Today!
             </h1>
-            <p className="text-lg sm:text-xl text-green-100 max-w-2xl mx-auto text-balance">
+            <p className="text-xl text-green-100">
               Join thousands of successful sellers and grow your pet business with the Philippines' trusted animal
               marketplace
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-10">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                <Users className="h-6 w-6 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-3">
+                <Users className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Large Customer Base</h3>
+              <h3 className="font-semibold mb-2">Large Customer Base</h3>
               <p className="text-sm text-green-100">Reach thousands of pet lovers across the Philippines</p>
             </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                <TrendingUp className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-3">
+                <TrendingUp className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Grow Your Sales</h3>
+              <h3 className="font-semibold mb-2">Grow Your Sales</h3>
               <p className="text-sm text-green-100">Powerful tools to boost your business growth</p>
             </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                <Shield className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-3">
+                <Shield className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Secure Platform</h3>
+              <h3 className="font-semibold mb-2">Secure Platform</h3>
               <p className="text-sm text-green-100">Safe transactions with buyer protection</p>
             </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                <Sparkles className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-3">
+                <Sparkles className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Easy to Use</h3>
+              <h3 className="font-semibold mb-2">Easy to Use</h3>
               <p className="text-sm text-green-100">Simple dashboard to manage your products</p>
             </div>
           </div>
         </div>
       </div>
 
-     <div className="flex justify-center items-start py-8 sm:py-12">
-
-        <Card className="w-full max-w-4xl shadow-2xl rounded-2xl bg-white border-0 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-700 to-emerald-600 px-6 py-4">
-            <div className="flex items-center justify-between text-white">
-              <div>
-                <p className="text-sm font-medium text-green-100">
-                  Step {step + 1} of {steps.length}
-                </p>
-                <h2 className="text-xl sm:text-2xl font-bold mt-1">{steps[step]}</h2>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold">{Math.round(((step + 1) / steps.length) * 100)}%</div>
-                <p className="text-xs text-green-100">Complete</p>
+      {/* Registration Form */}
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <Card className="shadow-xl border-t-4 border-t-green-600">
+          <CardContent className="p-8">
+            {/* Progress Header */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Step {step + 1} of {steps.length}</p>
+                  <h2 className="text-2xl font-bold text-gray-900">{steps[step]}</h2>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-green-600">{Math.round(((step + 1) / steps.length) * 100)}%</p>
+                  <p className="text-sm text-gray-500">Complete</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <CardContent className="p-6 sm:p-8 lg:p-10 space-y-8">
+            {/* Step Indicators */}
             <div className="mb-8">
-              <div className="flex justify-between items-start gap-2 relative px-2">
-                {steps.map((s, i) => (
-                  <div key={s} className="flex-1 flex flex-col items-center relative z-10">
-                    <div
-                      className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center font-bold text-white text-base sm:text-lg transition-all duration-300 shadow-lg ${
-                        i < step
-                          ? "bg-green-600 scale-95"
-                          : i === step
-                            ? "bg-green-800 scale-110 ring-4 ring-green-200"
-                            : "bg-gray-300 scale-90"
-                      }`}
-                    >
-                      {i < step ? <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" /> : i + 1}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-1">
+                  {steps.map((s, i) => (
+                    <div key={i} className="flex items-center flex-1">
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold ${
+                        i <= step ? "bg-green-600 text-white" : "bg-gray-200 text-gray-500"
+                      }`}>
+                        {i < step ? <CheckCircle2 className="h-6 w-6" /> : i + 1}
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <p className={`text-sm font-medium ${i <= step ? "text-green-600" : "text-gray-500"}`}>
+                          {s}
+                        </p>
+                      </div>
                     </div>
-                    <p
-                      className={`text-[10px] sm:text-xs md:text-sm mt-2 text-center leading-tight px-1 max-w-[80px] sm:max-w-none font-medium ${
-                        i <= step ? "text-green-800" : "text-gray-400"
-                      }`}
-                    >
-                      {s}
-                    </p>
-                  </div>
-                ))}
-                <div className="absolute top-5 sm:top-6 md:top-7 left-0 right-0 h-1 bg-gray-200 -z-0 mx-8 sm:mx-10 md:mx-12">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-600 to-green-800 transition-all duration-500 rounded-full"
-                    style={{ width: `${(step / (steps.length - 1)) * 100}%` }}
+                  ))}
+                </div>
+                <div className="h-1 bg-gray-200 rounded-full absolute left-0 right-0 top-5 -z-10">
+                  <div 
+                    className="h-full bg-green-600 rounded-full transition-all duration-300"
+                    style={{ width: `${((step + 1) / steps.length) * 100}%` }}
                   />
                 </div>
               </div>
@@ -356,56 +436,34 @@ export default function SellerRegisterPage() {
 
             {/* Step Forms */}
             {step === 0 && (
-              <div className="space-y-5">
-                <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-r-lg mb-6">
-                  <p className="text-sm text-green-800 font-medium flex items-start">
-                    <Sparkles className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                    <span>Let's get started! Create your seller account in just a few minutes.</span>
-                  </p>
+              <div className="space-y-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <Sparkles className="inline h-5 w-5 text-green-600 mr-2" />
+                  <span className="text-green-800 font-medium">Let's get started! Create your seller account in just a few minutes.</span>
                 </div>
 
-                <div>
-                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
-                    Full Name *
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Juan Dela Cruz"
-                    className="mt-1.5 border-gray-300 focus:border-green-500 focus:ring-green-500"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
+                  <Input id="name" name="name" value={form.name} onChange={handleChange} placeholder="Juan Dela Cruz" />
                 </div>
-                <div>
-                  <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
-                    Email Address *
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="juan@example.com"
-                    className="mt-1.5 border-gray-300 focus:border-green-500 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">We'll send order notifications to this email</p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="juan@example.com" />
+                  <p className="text-xs text-gray-500">We'll send order notifications to this email</p>
                 </div>
-                <div>
-                  <Label htmlFor="contactNumber" className="text-sm font-semibold text-gray-700">
-                    Contact Number *
-                  </Label>
-                  <div className="flex items-center border rounded-md overflow-hidden mt-1.5 border-gray-300 focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500">
-                    <span className="flex items-center gap-2 px-3 bg-gray-100 text-gray-700 text-sm font-medium">
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactNumber">Contact Number *</Label>
+                  <div className="flex items-center gap-2 border rounded-md pr-3">
+                    <span className="px-3 py-2 bg-gray-50 border-r text-sm font-medium text-gray-700">
                       🇵🇭 +63
                     </span>
-                    <Input
+                    <input
                       id="contactNumber"
                       name="contactNumber"
                       type="tel"
                       value={form.contactNumber}
-                      maxLength={10}
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, "")
                         if (value && !value.startsWith("9")) {
@@ -421,51 +479,137 @@ export default function SellerRegisterPage() {
                       className="flex-1 border-0 focus:ring-0"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Customers will use this to contact you</p>
+                  <p className="text-xs text-gray-500">Customers will use this to contact you</p>
                 </div>
-                <div>
-                  <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
-                    Password *
-                  </Label>
-                  <div className="relative mt-1.5">
+
+                {/* Philippine Location Comboboxes */}
+                <div className="space-y-4 border-t pt-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Business Location *</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="region">Region *</Label>
+                    <select
+                      id="region"
+                      value={selectedRegion}
+                      onChange={(e) => setSelectedRegion(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="">Select Region</option>
+                      {regions.map((region) => (
+                        <option key={region.region_code} value={region.region_code}>
+                          {region.region_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="province">Province *</Label>
+                    <select
+                      id="province"
+                      value={selectedProvince}
+                      onChange={(e) => setSelectedProvince(e.target.value)}
+                      disabled={!selectedRegion}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select Province</option>
+                      {filteredProvinces.map((province) => (
+                        <option key={province.province_code} value={province.province_code}>
+                          {province.province_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City/Municipality *</Label>
+                    <select
+                      id="city"
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                      disabled={!selectedProvince}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select City/Municipality</option>
+                      {filteredCities.map((city) => (
+                        <option key={city.city_code} value={city.city_code}>
+                          {city.city_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                 <div className="space-y-2">
+                  <Label htmlFor="barangay">Barangay *</Label>
+                  <select
+                    id="barangay"
+                    name="barangay"
+                    value={form.barangay}
+                    onChange={handleChange}
+                    disabled={!selectedCity}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select Barangay</option>
+                    {filteredBarangays.map((b) => (
+                      <option key={b.brgy_code} value={b.brgy_name}>
+                        {b.brgy_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+
+                  <div className="space-y-2">
+                    <Label htmlFor="streetAddress">Street Address *</Label>
+                    <Input
+                      id="streetAddress"
+                      name="streetAddress"
+                      value={form.streetAddress}
+                      onChange={handleChange}
+                      placeholder="House/Unit No., Street Name, Subdivision"
+                    />
+                    <p className="text-xs text-gray-500">Enter your complete street address including house/building number</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password *</Label>
+                  <div className="relative">
                     <Input
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
                       value={form.password}
                       onChange={handleChange}
-                      placeholder="Minimum 8 characters"
-                      className="pr-10 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                      placeholder="Min. 8 characters"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">
-                    Confirm Password *
-                  </Label>
-                  <div className="relative mt-1.5">
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <div className="relative">
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       value={form.confirmPassword}
                       onChange={handleChange}
-                      placeholder="Re-enter your password"
-                      className="pr-10 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                      placeholder="Re-enter password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                 </div>
@@ -473,99 +617,82 @@ export default function SellerRegisterPage() {
             )}
 
             {step === 1 && (
-              <div className="space-y-5">
-                <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-r-lg mb-6">
-                  <p className="text-sm text-green-800 font-medium flex items-start">
-                    <Store className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                    <span>Tell us about your business. This helps build trust with customers!</span>
-                  </p>
+              <div className="space-y-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <Store className="inline h-5 w-5 text-green-600 mr-2" />
+                  <span className="text-green-800 font-medium">Tell us about your business. This helps build trust with customers!</span>
                 </div>
 
-                <div>
-                  <Label htmlFor="companyName" className="text-sm font-semibold text-gray-700">
-                    Company/Business Name *
-                  </Label>
-                  <Input
-                    id="companyName"
-                    name="companyName"
-                    value={form.companyName}
-                    onChange={handleChange}
-                    placeholder="e.g., Paws & Claws Pet Shop"
-                    className="mt-1.5 border-gray-300 focus:border-green-500 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">This will be displayed on your seller profile</p>
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company/Business Name *</Label>
+                  <Input id="companyName" name="companyName" value={form.companyName} onChange={handleChange} placeholder="Your Business Name" />
+                  <p className="text-xs text-gray-500">This will be displayed on your seller profile</p>
                 </div>
 
-                <div>
-                  <Label className="mb-3 block text-sm font-semibold text-gray-700">
-                    Business Permits * (Select all that apply)
-                  </Label>
-                  <div className="space-y-3 bg-gradient-to-br from-gray-50 to-green-50 p-5 rounded-xl border border-green-100">
-                    <div className="flex items-start gap-3 bg-white p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                <div className="space-y-4">
+                  <Label>Business Permits * (Select all that apply)</Label>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 border rounded-lg p-4 hover:bg-gray-50">
                       <input
                         type="checkbox"
-                        id="dtiSec"
+                        id="dti"
                         checked={form.businessPermitTypes.includes("DTI/SEC")}
                         onChange={() => handleCheckboxChange("DTI/SEC")}
                         className="mt-1 h-5 w-5 text-green-800 rounded border-gray-300 focus:ring-green-500"
                       />
                       <div className="flex-1">
-                        <Label htmlFor="dtiSec" className="font-semibold cursor-pointer text-gray-800">
+                        <label htmlFor="dti" className="font-medium text-gray-900 cursor-pointer">
                           DTI/SEC Registration
-                        </Label>
-                        <p className="text-xs text-gray-600 mt-0.5">
+                        </label>
+                        <p className="text-sm text-gray-500">
                           Department of Trade and Industry or Securities and Exchange Commission
                         </p>
                         {form.businessPermitTypes.includes("DTI/SEC") && (
                           <div className="mt-3">
-                            <FileUploadField label="" id="dtiSec" name="dtiSec" file={form.dtiSec} />
+                            <FileUploadField label="Upload DTI/SEC Document" id="dtiSec" name="dtiSec" file={form.dtiSec} />
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 bg-white p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                    <div className="flex items-start gap-3 border rounded-lg p-4 hover:bg-gray-50">
                       <input
                         type="checkbox"
-                        id="mayorsPermit"
+                        id="mayors"
                         checked={form.businessPermitTypes.includes("Mayor's Permit")}
                         onChange={() => handleCheckboxChange("Mayor's Permit")}
                         className="mt-1 h-5 w-5 text-green-800 rounded border-gray-300 focus:ring-green-500"
                       />
                       <div className="flex-1">
-                        <Label htmlFor="mayorsPermit" className="font-semibold cursor-pointer text-gray-800">
+                        <label htmlFor="mayors" className="font-medium text-gray-900 cursor-pointer">
                           Mayor's Permit
-                        </Label>
-                        <p className="text-xs text-gray-600 mt-0.5">Business permit from your local government unit</p>
+                        </label>
+                        <p className="text-sm text-gray-500">Business permit from your local government unit</p>
                         {form.businessPermitTypes.includes("Mayor's Permit") && (
                           <div className="mt-3">
-                            <FileUploadField label="" id="mayorsPermit" name="mayorsPermit" file={form.mayorsPermit} />
+                            <FileUploadField label="Upload Mayor's Permit" id="mayorsPermit" name="mayorsPermit" file={form.mayorsPermit} />
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 bg-white p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                    <div className="flex items-start gap-3 border rounded-lg p-4 hover:bg-gray-50">
                       <input
                         type="checkbox"
-                        id="birCertificate"
+                        id="bir"
                         checked={form.businessPermitTypes.includes("BIR Certificate")}
                         onChange={() => handleCheckboxChange("BIR Certificate")}
                         className="mt-1 h-5 w-5 text-green-800 rounded border-gray-300 focus:ring-green-500"
                       />
                       <div className="flex-1">
-                        <Label htmlFor="birCertificate" className="font-semibold cursor-pointer text-gray-800">
+                        <label htmlFor="bir" className="font-medium text-gray-900 cursor-pointer">
                           BIR Certificate of Registration
-                        </Label>
-                        <p className="text-xs text-gray-600 mt-0.5">Bureau of Internal Revenue tax registration</p>
+                        </label>
+                        <p className="text-sm text-gray-500">Bureau of Internal Revenue tax registration</p>
                         {form.businessPermitTypes.includes("BIR Certificate") && (
                           <div className="mt-3">
-                            <FileUploadField
-                              label=""
-                              id="birCertificate"
-                              name="birCertificate"
-                              file={form.birCertificate}
-                            />
+                            <FileUploadField label="Upload BIR Certificate" id="birCertificate" name="birCertificate" file={form.birCertificate} />
                           </div>
                         )}
                       </div>
@@ -574,6 +701,7 @@ export default function SellerRegisterPage() {
                 </div>
               </div>
             )}
+
 
             {step === 2 && (
               <div className="space-y-5">
