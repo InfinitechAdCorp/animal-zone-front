@@ -77,26 +77,29 @@ export default function CheckoutPage() {
     loadData()
   }, [])
 
-  const loadUserInfo = async () => {
-    if (!token) return
-    try {
-      const user = await getUserInfo(token)
-      setDeliveryInfo({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.contact_number || "",
-        region: user.region || "",
-        province: user.province || "",
-        city: user.city || "",
-        barangay: user.barangay || "",
-        street_address: user.street_address || "",
-        postal_code: user.postal_code || "",
-      })
-    } catch (error) {
-      console.error("Error loading user info:", error)
-      toast.error("Failed to load delivery information")
-    }
+const loadUserInfo = async () => {
+  if (!token) return
+  try {
+    const user = await getUserInfo(token)
+
+    setDeliveryInfo({
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.contact_number || "",
+      region: user.region || "",
+      province: user.province || "",
+      city: user.city || "",
+      barangay: user.barangay || "",
+      street_address: user.street_address || "",
+      postal_code: user.postal_code || "",
+    })
+  } catch (error) {
+    console.error("Error loading user info:", error)
+    toast.error("Failed to load delivery information")
   }
+}
+
+
 
   const calculateTotals = () => {
     let subtotal = 0
