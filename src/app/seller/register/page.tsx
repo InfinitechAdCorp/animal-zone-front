@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, X, Store, TrendingUp, Shield, Users, Sparkles, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { registerSeller } from "@/lib/api"
+import Link from "next/link" // ✅ make sure this is imported (you already have React Router)
+import { LogIn } from "lucide-react"
 
 // Philippine Location Data
 // ✅ Corrected imports — match your file names exactly
@@ -338,22 +340,31 @@ export default function SellerRegisterPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-700 to-green-900 text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 rounded-full mb-4">
-              <Store className="h-10 w-10" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Start Selling on Animal Zone Today!
-            </h1>
-            <p className="text-xl text-green-100">
-              Join thousands of successful sellers and grow your pet business with the Philippines' trusted animal
-              marketplace
-            </p>
+      <div className="relative bg-gradient-to-r from-green-700 to-green-900 text-white py-16 px-4 w-full">
+        {/* ✅ Login button properly positioned */}
+       <div className="absolute top-6 right-6 z-10">
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2 bg-white text-green-700 font-semibold rounded-md shadow hover:bg-green-50 transition-all duration-200"
+          >
+            <LogIn className="h-4 w-4" /> {/* ✅ icon added */}
+            Login Here
+          </Link>
+        </div>
+
+        {/* ✅ Centered content */}
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 rounded-full mb-4">
+            <Store className="h-10 w-10" />
           </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Start Selling on Animal Zone Today!
+          </h1>
+          <p className="text-xl text-green-100 mb-12">
+            Join thousands of successful sellers and grow your pet business with the Philippines' trusted animal marketplace
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center">
