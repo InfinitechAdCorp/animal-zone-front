@@ -9,6 +9,7 @@ type CartContextType = {
   incrementCartCount: () => void
   decrementCartCount: () => void
   incrementCart: (quantity: number) => void
+  clearCart: () => void // ✅ added
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -16,7 +17,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartCount, setCartCount] = useState(0)
 
-  // Load cart count from localStorage on mount
+  // ✅ Load cart count from localStorage on mount
   useEffect(() => {
     const savedCount = localStorage.getItem("cartCount")
     if (savedCount) {
@@ -24,7 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Save cart count to localStorage whenever it changes
+  // ✅ Save cart count to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("cartCount", cartCount.toString())
   }, [cartCount])
@@ -45,6 +46,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCartCount((prev) => prev + quantity)
   }
 
+  // ✅ New: clear cart completely (for checkout success)
+  const clearCart = () => {
+    setCartCount(0)
+    localStorage.removeItem("cartCount")
+  }
+
   return (
     <CartContext.Provider
       value={{
@@ -53,6 +60,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         incrementCartCount,
         decrementCartCount,
         incrementCart,
+        clearCart, // ✅ added
       }}
     >
       {children}

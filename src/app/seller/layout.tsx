@@ -3,13 +3,14 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Home, Package, Settings } from "lucide-react"
+import { Home, Package, Settings, PackageCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchCurrentUser } from "@/app/api/seller/fetchUser"
 
 const navItems = [
   { href: "/seller/dashboard", label: "Dashboard", icon: Home },
   { href: "/seller/products", label: "My Products", icon: Package },
+    { href: "/seller/orders", label: "Orders", icon: PackageCheck },
   { href: "/seller/account", label: "Account", icon: Settings },
 ]
 

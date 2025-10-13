@@ -4,33 +4,29 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, Package, ShoppingBag } from "lucide-react"
+import { getOrderHistory } from "@/lib/api" // ✅ make sure this function exists in your /lib/api.ts
 
 export default function OrderHistoryPage() {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [orders, setOrders] = useState<any[]>([])
 
-  // Sample mock data (frontend only)
-  const [orders] = useState([
-    {
-      id: 1023,
-      created_at: "2025-10-02T14:30:00Z",
-      total_amount: 1299,
-      status: "Delivered",
-      items: [
-        { id: 1, name: "Dog Leash", price: 499, quantity: 1 },
-        { id: 2, name: "Pet Shampoo", price: 400, quantity: 2 },
-      ],
-    },
-    {
-      id: 1024,
-      created_at: "2025-09-29T09:20:00Z",
-      total_amount: 720,
-      status: "Pending",
-      items: [
-        { id: 3, name: "Cat Toy Ball", price: 120, quantity: 3 },
-        { id: 4, name: "Cat Food 1kg", price: 360, quantity: 1 },
-      ],
-    },
-  ])
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const token = localStorage.getItem("authToken")
+        if (!token) throw new Error("User not logged in")
+
+        const data = await getOrderHistory(token)
+        setOrders(data)
+      } catch (error) {
+        console.error("❌ Failed to load orders:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrders()
+  }, [])
 
   if (loading) {
     return (
@@ -93,7 +89,7 @@ export default function OrderHistoryPage() {
 
             <CardContent className="space-y-3">
               <div className="divide-y divide-border">
-                {order.items.map((item) => (
+                {order.items?.map((item: any) => (
                   <div
                     key={item.id}
                     className="flex justify-between py-2 text-sm"
@@ -109,7 +105,7 @@ export default function OrderHistoryPage() {
               <div className="flex justify-between items-center mt-4 pt-3 border-t border-border">
                 <span className="font-semibold text-foreground">Total:</span>
                 <span className="font-bold text-primary text-lg">
-                  ₱{order.total_amount.toFixed(2)}
+                  ₱{Number(order.total_amount).toFixed(2)}
                 </span>
               </div>
 

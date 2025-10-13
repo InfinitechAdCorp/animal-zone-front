@@ -328,5 +328,74 @@ export async function getOrderHistory(token: string) {
 
   return res.json()
 }
+//------------------------------------------------
+function getAuthToken() {
+  if (typeof window === "undefined") return null
+  return localStorage.getItem("authToken")
+}
+
+
+// ---------------- SELLER ORDERS ----------------
+export async function getSellerOrders(token?: string) {
+  const finalToken = token || getAuthToken()
+  console.log("🧩 Using Token:", finalToken)
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/seller/orders`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${finalToken}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    console.error("❌ Seller Orders Error:", err)
+    throw new Error(err.message || `Failed: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+
+export async function updateOrderStatus(id: number, status: string, token: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/seller/orders/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!res.ok) throw new Error("Failed to update order status");
+  return res.json();
+}
+
+export async function updateSellerPaymentMethods(formData: FormData) {
+  const token = localStorage.getItem("authToken");
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/seller/payment-methods`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to update payment methods");
+  }
+
+  return res.json();
+}
+
+
+
 
 

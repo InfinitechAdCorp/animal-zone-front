@@ -16,6 +16,7 @@ import { regions } from "@/data/region"
 import { provinces } from "@/data/province"
 import { cities } from "@/data/cities"
 import { barangay } from "@/data/barangay"
+import { useCart } from "@/context/CartContext"
 
 type CheckoutItem = {
   id: number
@@ -38,12 +39,21 @@ export default function CheckoutPage() {
   const [checkoutData, setCheckoutData] = useState<SellerGroup[]>([])
   const [paymentMethod, setPaymentMethod] = useState<string>("gcash")
   const [isProcessing, setIsProcessing] = useState(false)
+  const { clearCart } = useCart()
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token") || localStorage.getItem("authToken")
       : null
+
+
+      const getFullImageUrl = (url: string) => {
+  if (!url) return "/placeholder.png"
+  if (url.startsWith("http")) return url
+  return `${backendUrl}/${url.replace(/^\/?/, "")}`
+}
+
 
   const [deliveryInfo, setDeliveryInfo] = useState({
     name: "",
@@ -80,6 +90,34 @@ export default function CheckoutPage() {
 
     loadData()
   }, [])
+
+  const [sellerQRCodes, setSellerQRCodes] = useState<Record<number, any>>({})
+
+useEffect(() => {
+  const fetchQRCodes = async () => {
+    try {
+      const results = await Promise.all(
+        checkoutData.map(async (seller) => {
+          const res = await fetch(`${backendUrl}/api/sellers/${seller.seller_id}/payment-qrs`)
+          const qr = await res.json()
+          return { id: seller.seller_id, qr }
+        })
+      )
+
+      const qrMap = results.reduce((acc, curr) => {
+        acc[curr.id] = curr.qr
+        return acc
+      }, {} as Record<number, any>)
+
+      setSellerQRCodes(qrMap)
+    } catch (error) {
+      console.error("Error loading seller QR codes:", error)
+    }
+  }
+
+  if (checkoutData.length > 0) fetchQRCodes()
+}, [checkoutData])
+
 
   // 🧠 Safe helpers
   const getBarangayCode = (name: string) =>
@@ -244,9 +282,9 @@ export default function CheckoutPage() {
 
       const result = await placeOrder(orderData, token as string)
       localStorage.removeItem("checkoutItems")
-
+      clearCart()
       toast.success("Order placed successfully!")
-      router.push(`/orders/${result.order_id}`)
+      router.push("/order-history")
     } catch (error: any) {
       console.error("Error placing order:", error)
       toast.error(error.message || "Failed to place order")
@@ -324,48 +362,53 @@ export default function CheckoutPage() {
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                   <div className="space-y-3">
                     {[
-                      {
-                        id: "gcash",
-                        icon: <Smartphone className="w-5 h-5 text-blue-600" />,
-                        title: "GCash",
-                        desc: "Pay via GCash mobile wallet",
-                      },
-                      {
-                        id: "bpi",
-                        icon: <Building2 className="w-5 h-5 text-red-600" />,
-                        title: "BPI Online Banking",
-                        desc: "Bank of the Philippine Islands",
-                      },
-                      {
-                        id: "bank_transfer",
-                        icon: <Building2 className="w-5 h-5 text-green-600" />,
-                        title: "Other Banks",
-                        desc: "BDO, Metrobank, UnionBank, etc.",
-                      },
-                      {
-                        id: "cod",
-                        icon: <CreditCard className="w-5 h-5 text-gray-600" />,
-                        title: "Cash on Delivery",
-                        desc: "Pay when you receive your order",
-                      },
-                    ].map((method) => (
-                      <div
-                        key={method.id}
-                        className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                      >
-                        <RadioGroupItem value={method.id} id={method.id} />
-                        <Label
-                          htmlFor={method.id}
-                          className="flex items-center gap-3 cursor-pointer flex-1"
+                        { id: "gcash", title: "GCash", desc: "Pay via GCash mobile wallet", key: "gcash_qr", icon: <Smartphone className="w-5 h-5 text-blue-600" /> },
+                        { id: "paymaya", title: "Maya", desc: "Pay via Maya mobile wallet", key: "paymaya_qr", icon: <Smartphone className="w-5 h-5 text-green-600" /> },
+                        { id: "bpi", title: "BPI Bank Transfer", desc: "Transfer via BPI Online", key: "bpi_qr", icon: <Building2 className="w-5 h-5 text-red-600" /> },
+                        { id: "bdo", title: "BDO Bank Transfer", desc: "Transfer via BDO Online", key: "bdo_qr", icon: <Building2 className="w-5 h-5 text-yellow-600" /> },
+                        { id: "cod", title: "Cash on Delivery", desc: "Pay when order arrives", key: null, icon: <CreditCard className="w-5 h-5 text-gray-600" /> },
+                      ].map((method) => (
+                        <div
+                          key={method.id}
+                          className={`flex flex-col space-y-3 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer ${
+                            paymentMethod === method.id ? "border-blue-500 bg-blue-50" : ""
+                          }`}
+                          onClick={() => setPaymentMethod(method.id)}
                         >
-                          {method.icon}
-                          <div>
-                            <p className="font-medium">{method.title}</p>
-                            <p className="text-xs text-gray-500">{method.desc}</p>
+                          <div className="flex items-center space-x-3">
+                            <RadioGroupItem value={method.id} id={method.id} />
+                            <Label htmlFor={method.id} className="flex items-center gap-3 cursor-pointer flex-1">
+                              {method.icon}
+                              <div>
+                                <p className="font-medium">{method.title}</p>
+                                <p className="text-xs text-gray-500">{method.desc}</p>
+                              </div>
+                            </Label>
                           </div>
-                        </Label>
-                      </div>
-                    ))}
+
+                          {/* ✅ Show seller QR codes */}
+                          {method.key &&
+                            checkoutData.map((seller) => {
+                              const qr = sellerQRCodes[seller.seller_id]?.[method.key]
+                              if (!qr) return null
+                              return (
+                                <div key={`${seller.seller_id}-${method.id}`} className="ml-8 border rounded-md p-2 bg-gray-50">
+                                  <p className="text-xs text-gray-600 mb-1 font-medium">
+                                    {seller.seller_name}’s {method.title} QR:
+                                  </p>
+                               <img
+                                  src={getFullImageUrl(qr)}
+                                  alt={`${method.title} QR`}
+                                  className="w-40 h-40 object-contain rounded-md border bg-white"
+                                  onError={(e) => ((e.target as HTMLImageElement).src = "/placeholder.png")}
+                                />
+
+                                </div>
+                              )
+                            })}
+                        </div>
+                      ))}
+
                   </div>
                 </RadioGroup>
               </CardContent>
