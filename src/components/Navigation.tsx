@@ -89,7 +89,7 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+          <div className="hidden lg:flex items-center space-x-6 xl:space-x-8 relative">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -101,6 +101,27 @@ export default function Navigation() {
                 {link.label}
               </Link>
             ))}
+
+            {/* --- For Sellers Dropdown --- */}
+            <div className="relative group">
+              <button
+                className="text-sm xl:text-base text-muted-foreground hover:text-primary transition-colors flex items-center"
+              >
+                For Sellers ▾
+              </button>
+
+              <div className="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-white border border-border shadow-lg rounded-md mt-2 w-44 z-50"
+                  onMouseEnter={(e) => e.currentTarget.classList.add("visible", "opacity-100")}
+                  onMouseLeave={(e) => e.currentTarget.classList.remove("visible", "opacity-100")}>
+
+                <Link
+                  href="/seller/register"
+                  className="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-primary rounded-md transition-colors"
+                >
+                  Register as Seller
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Right Side Actions */}
@@ -230,6 +251,17 @@ export default function Navigation() {
                   {link.label}
                 </Link>
               ))}
+
+              {/* --- For Sellers (Mobile) --- */}
+              <div className="border-t border-border pt-3">
+                <Link
+                  href="/seller/register"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-3 py-2 hover:bg-accent hover:text-primary rounded-md transition-colors"
+                >
+                  Register as Seller
+                </Link>
+              </div>
 
               {/* Auth Buttons */}
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
