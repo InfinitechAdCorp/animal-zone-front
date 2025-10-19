@@ -1,6 +1,5 @@
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
-import Categories from "@/components/landing/Categories";
 import HowItWorks from "@/components/landing/HowItWorks";
 import WhyChooseUs from "@/components/landing/WhyChooseUs";
 import CallToAction from "@/components/landing/CallToAction";
@@ -11,7 +10,6 @@ export default function Home() {
     <main className="min-h-screen">
       <Hero />
       <Features />
-      <Categories />
       <HowItWorks />
       <WhyChooseUs />
       <CallToAction />

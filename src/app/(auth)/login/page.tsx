@@ -116,27 +116,6 @@ export default function Login() {
                 </div>
               </div>
             </div>
-
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <Label htmlFor="remember" className="text-sm cursor-pointer">
-                  Remember me
-                </Label>
-              </div>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-primary hover:underline font-medium"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
             {/* Submit */}
             <Button type="submit" className="w-full h-12 text-base" size="lg">
               Sign in
