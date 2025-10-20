@@ -1,23 +1,31 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Home, Package, Settings, PackageCheck } from "lucide-react"
+import { Home, Package, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchCurrentUser } from "@/app/api/seller/fetchUser"
 
 const navItems = [
   { href: "/seller/dashboard", label: "Dashboard", icon: Home },
   { href: "/seller/products", label: "My Products", icon: Package },
-    { href: "/seller/orders", label: "Orders", icon: PackageCheck },
   { href: "/seller/account", label: "Account", icon: Settings },
 ]
 
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+  const token = localStorage.getItem("authToken")
+  if (!token) {
+    router.push("/login")
+  }
+}, [router])
+
 
   useEffect(() => {
     const loadUser = async () => {
@@ -30,6 +38,15 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
     }
     loadUser()
   }, [])
+
+ const handleLogout = () => {
+  localStorage.removeItem("authToken")
+  localStorage.removeItem("user")
+  localStorage.removeItem("cartCount")
+  router.push("/login")
+  window.location.reload()
+}
+
 
   // habang nagfe-fetch pa → show loader
   if (loading) {
@@ -52,25 +69,38 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
     if (isRestricted) {
       return (
         <div className="flex min-h-screen bg-gray-100">
-          <aside className="w-64 bg-white border-r shadow-sm">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold text-green-800">Seller Panel</h2>
+          <aside className="w-64 bg-white border-r shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="p-6 border-b">
+                <h2 className="text-xl font-bold text-green-800">Seller Panel</h2>
+              </div>
+              <nav className="p-4 space-y-2">
+                {navItems.map(({ href, label, icon: Icon }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-700 transition",
+                      pathname === href && "bg-green-100 text-green-800 font-semibold"
+                    )}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {label}
+                  </Link>
+                ))}
+              </nav>
             </div>
-            <nav className="p-4 space-y-2">
-              {navItems.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-700 transition",
-                    pathname === href && "bg-green-100 text-green-800 font-semibold"
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  {label}
-                </Link>
-              ))}
-            </nav>
+
+            {/* 🔹 Logout button sa baba */}
+            <div className="p-4 border-t">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+              >
+                <LogOut className="w-5 h-5" />
+                Logout
+              </button>
+            </div>
           </aside>
 
           <main className="flex-1 p-6 flex items-center justify-center">
@@ -95,28 +125,41 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
   // approved = full access
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <aside className="w-64 bg-white border-r shadow-sm">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-bold text-green-800">Seller Panel</h2>
+      <aside className="w-64 bg-white border-r shadow-sm flex flex-col justify-between">
+        <div>
+          <div className="p-6 border-b">
+            <h2 className="text-xl font-bold text-green-800">Seller Panel</h2>
+          </div>
+          <nav className="p-4 space-y-2">
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-700 transition",
+                    isActive && "bg-green-100 text-green-800 font-semibold"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-700 transition",
-                  isActive && "bg-green-100 text-green-800 font-semibold"
-                )}
-              >
-                <Icon className="w-5 h-5" />
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
+
+        {/* 🔹 Logout button sa baba */}
+        <div className="p-4 border-t">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
       </aside>
 
       <main className="flex-1 p-6">{children}</main>
