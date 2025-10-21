@@ -1,18 +1,34 @@
-// app/(admin)/layout.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Shield, Users, Package, FileCheck, BarChart3, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true); // render only after hydration
+
+    const token = localStorage.getItem("authToken");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
+      router.push("/login");
+      return;
+    }
+
+    const parsedUser = JSON.parse(user);
+    if (parsedUser.role !== "admin") {
+      router.push("/login");
+    }
+  }, [router]);
+
+  // 🧩 Prevent SSR mismatches by skipping initial render
+  if (!isClient) return null;
 
   const navItems = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
@@ -22,33 +38,17 @@ export default function AdminLayout({
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
-  // 🔹 Redirect to login if not authenticated
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const user = localStorage.getItem("user");
-
-    if (!token || !user) {
-      router.push("/login");
-    } else {
-      const parsedUser = JSON.parse(user);
-      if (parsedUser.role !== "admin") {
-        router.push("/login");
-      }
-    }
-  }, [router]);
-
-  // 🔹 Logout handler
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
     localStorage.removeItem("cartCount");
     router.push("/login");
-    window.location.reload(); // ensures full reset
+    window.location.reload();
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Admin Header */}
+      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -66,14 +66,6 @@ export default function AdminLayout({
               <Link href="/" className="text-sm text-gray-600 hover:text-green-800">
                 Back to Site
               </Link>
-              {/* 🔹 Logout Button in Header */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
             </div>
           </div>
         </div>
@@ -85,17 +77,15 @@ export default function AdminLayout({
           <nav className="p-4 space-y-2">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
-
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                    ${
-                      isActive
-                        ? "bg-green-100 text-green-800 font-semibold"
-                        : "text-gray-700 hover:bg-green-50 hover:text-green-700"
-                    }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-green-100 text-green-800 font-semibold"
+                      : "text-gray-700 hover:bg-green-50 hover:text-green-700"
+                  }`}
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.name}</span>
@@ -104,7 +94,6 @@ export default function AdminLayout({
             })}
           </nav>
 
-          {/* 🔹 Logout button sa sidebar din (optional redundancy) */}
           <div className="p-4 border-t">
             <button
               onClick={handleLogout}
@@ -116,7 +105,6 @@ export default function AdminLayout({
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1">{children}</main>
       </div>
     </div>

@@ -254,124 +254,56 @@ export default function AdminReviewPanel() {
           <div className="space-y-4">
             {/* Search Bar */}
            
-            {activeTab === "sellers" ? (
-                <>
-                  {/* 🔎 Search Bar */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search by company, seller name, email, or status..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
-                      />
-                      <Search className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
-                    </div>
+           {activeTab === "sellers" ? (
+              <>
+                {/* 🔎 Search Bar */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by company, seller name, email, or status..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
+                    />
+                    <Search className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
                   </div>
+                </div>
 
-                  {currentApplications.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 sm:p-12 text-center">
-                      <Store className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-                        {searchQuery ? "No Results Found" : "No Applications Yet"}
-                      </h3>
-                      <p className="text-sm sm:text-base text-gray-600">
-                        {searchQuery
-                          ? "Try adjusting your search terms"
-                          : "Seller applications will appear here when submitted."}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {currentApplications.map((application) => (
-                        <SellerApplicationCard
-                          key={application.id}
-                          application={application}
-                          onAction={handleSellerAction}
-                          getStatusBadge={getStatusBadge}
-                        />
-                      ))}
-                      {/* Pagination */}
-                      {filteredApplications.length > itemsPerPage && (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-                              Showing {startIndex + 1} to{" "}
-                              {Math.min(endIndex, filteredApplications.length)} of{" "}
-                              {filteredApplications.length} applications
-                            </p>
-
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                                disabled={currentPage === 1}
-                                variant="outline"
-                                className="flex items-center gap-1 text-xs sm:text-sm"
-                                size="sm"
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                                <span className="hidden sm:inline">Previous</span>
-                              </Button>
-
-                              <div className="flex items-center gap-1">
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                                  if (
-                                    page === 1 ||
-                                    page === totalPages ||
-                                    (page >= currentPage - 1 && page <= currentPage + 1)
-                                  ) {
-                                    return (
-                                      <button
-                                        key={page}
-                                        onClick={() => setCurrentPage(page)}
-                                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
-                                          currentPage === page
-                                            ? "bg-green-800 text-white"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                        }`}
-                                      >
-                                        {page}
-                                      </button>
-                                    )
-                                  } else if (
-                                    page === currentPage - 2 ||
-                                    page === currentPage + 2
-                                  ) {
-                                    return (
-                                      <span
-                                        key={page}
-                                        className="px-1 sm:px-2 text-gray-400 text-xs sm:text-sm"
-                                      >
-                                        ...
-                                      </span>
-                                    )
-                                  }
-                                  return null
-                                })}
-                              </div>
-
-                              <Button
-                                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                                disabled={currentPage === totalPages}
-                                variant="outline"
-                                className="flex items-center gap-1 text-xs sm:text-sm"
-                                size="sm"
-                              >
-                                <span className="hidden sm:inline">Next</span>
-                                <ChevronRight className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                    </>
-                  )}
-                </>
-              ) : (
+                {/* Seller cards here... */}
+                {currentApplications.length === 0 ? (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 sm:p-12 text-center">
+                    <Store className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                      {searchQuery ? "No Results Found" : "No Applications Yet"}
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600">
+                      {searchQuery
+                        ? "Try adjusting your search terms"
+                        : "Seller applications will appear here when submitted."}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {currentApplications.map((application) => (
+                      <SellerApplicationCard
+                        key={application.id}
+                        application={application}
+                        onAction={handleSellerAction}
+                        getStatusBadge={getStatusBadge}
+                      />
+                    ))}
+                    {/* Pagination below... */}
+                  </>
+                )}
+              </>
+            ) : (
+              // ✅ Product Approvals tab
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
                 <ProductApprovals />
-              )}
+              </div>
+            )}
+
 
           </div>
         </div>

@@ -1,15 +1,18 @@
 "use client"
 
+import type React from "react"
+
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Home, Package, Settings, LogOut } from "lucide-react"
+import { Home, Package, Settings, LogOut, ShoppingCart  } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchCurrentUser } from "@/app/api/seller/fetchUser"
 
 const navItems = [
   { href: "/seller/dashboard", label: "Dashboard", icon: Home },
   { href: "/seller/products", label: "My Products", icon: Package },
+  { href: "/seller/orders", label: "Orders", icon: ShoppingCart },
   { href: "/seller/account", label: "Account", icon: Settings },
 ]
 
@@ -20,14 +23,22 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-  const token = localStorage.getItem("authToken")
-  if (!token) {
-    router.push("/login")
-  }
-}, [router])
+    if (pathname === "/seller/register") {
+      setLoading(false)
+      return
+    }
 
+    const token = localStorage.getItem("authToken")
+    if (!token) {
+      router.push("/login")
+    }
+  }, [router, pathname])
 
   useEffect(() => {
+    if (pathname === "/seller/register") {
+      return
+    }
+
     const loadUser = async () => {
       const freshUser = await fetchCurrentUser()
       if (freshUser) {
@@ -37,16 +48,15 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
       setLoading(false)
     }
     loadUser()
-  }, [])
+  }, [pathname])
 
- const handleLogout = () => {
-  localStorage.removeItem("authToken")
-  localStorage.removeItem("user")
-  localStorage.removeItem("cartCount")
-  router.push("/login")
-  window.location.reload()
-}
-
+  const handleLogout = () => {
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("user")
+    localStorage.removeItem("cartCount")
+    router.push("/login")
+    window.location.reload()
+  }
 
   // habang nagfe-fetch pa → show loader
   if (loading) {
@@ -81,7 +91,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                     href={href}
                     className={cn(
                       "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-700 transition",
-                      pathname === href && "bg-green-100 text-green-800 font-semibold"
+                      pathname === href && "bg-green-100 text-green-800 font-semibold",
                     )}
                   >
                     <Icon className="w-5 h-5" />
@@ -105,12 +115,10 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
 
           <main className="flex-1 p-6 flex items-center justify-center">
             <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-              <h2 className="text-xl font-bold text-red-600 mb-4">
-                You cannot access this page
-              </h2>
+              <h2 className="text-xl font-bold text-red-600 mb-4">You cannot access this page</h2>
               <p className="text-gray-600 mb-6">
-                Your seller account is currently <b>{verificationStatus}</b>.  
-                Please check your <b>Account</b> menu or your email for updates.
+                Your seller account is currently <b>{verificationStatus}</b>. Please check your <b>Account</b> menu or
+                your email for updates.
               </p>
               <Link href="/seller/account" className="text-green-700 underline font-medium">
                 Go to Account
@@ -139,7 +147,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                   href={href}
                   className={cn(
                     "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-700 transition",
-                    isActive && "bg-green-100 text-green-800 font-semibold"
+                    isActive && "bg-green-100 text-green-800 font-semibold",
                   )}
                 >
                   <Icon className="w-5 h-5" />
