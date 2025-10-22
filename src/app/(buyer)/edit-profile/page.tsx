@@ -29,7 +29,7 @@ export default function EditProfilePage() {
 
   // 🔹 Fetch profile data
   useEffect(() => {
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken")
+    const token = localStorage.getItem("authToken")
     if (!token) {
       toast.error("Please log in first")
       router.push("/login")
@@ -83,7 +83,7 @@ export default function EditProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken")
+    const token = localStorage.getItem("authToken")
     if (!token) {
       toast.error("You must be logged in.")
       return

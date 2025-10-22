@@ -234,22 +234,29 @@ export default function CartPage() {
   const allSelected = allItems.length > 0 && allItems.every((item) => selectedItems.has(item.id))
 
   const proceedToCheckout = () => {
-    if (!canCheckout) return
+  if (!canCheckout) return
 
-    // Prepare checkout data with only selected items
-    const checkoutItems: SellerGroup[] = cartData
-      .map((seller) => ({
-        ...seller,
-        items: seller.items.filter((item) => selectedItems.has(item.id)),
-      }))
-      .filter((seller) => seller.items.length > 0)
+  // Filter selected items per seller
+  const checkoutItems: SellerGroup[] = cartData
+    .map((seller) => ({
+      ...seller,
+      items: seller.items.filter((item) => selectedItems.has(item.id)),
+    }))
+    .filter((seller) => seller.items.length > 0)
 
-    // Store in localStorage for checkout page
-    localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems))
-
-    // Navigate to checkout
-    router.push("/checkout")
+  // ✅ Allow only one seller
+  if (checkoutItems.length > 1) {
+    toast.error("You can only checkout items from one store at a time.")
+    return
   }
+
+  // Store checkout data
+  localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems))
+
+  // Navigate to checkout
+  router.push("/checkout")
+}
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -264,7 +271,7 @@ export default function CartPage() {
               <CardContent className="p-4">
                 <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-600">
                   <div className="col-span-6 flex items-center gap-2">
-                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                    
                     <span>Product</span>
                   </div>
                   <div className="col-span-2 text-center">Unit Price</div>

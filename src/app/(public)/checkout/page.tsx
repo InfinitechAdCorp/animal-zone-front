@@ -37,14 +37,15 @@ type SellerGroup = {
 export default function CheckoutPage() {
   const router = useRouter()
   const [checkoutData, setCheckoutData] = useState<SellerGroup[]>([])
-  const [paymentMethod, setPaymentMethod] = useState<string>("gcash")
+  const [paymentMethod, setPaymentMethod] = useState<string>("cod")
   const [isProcessing, setIsProcessing] = useState(false)
   const { clearCart } = useCart()
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("token") || localStorage.getItem("authToken")
+      ? localStorage.getItem("authToken")
       : null
 
 
@@ -351,68 +352,146 @@ useEffect(() => {
 
             {/* PAYMENT METHOD */}
             <Card className="shadow-sm">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="w-5 h-5 text-green-600" />
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Payment Method
-                  </h2>
-                </div>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="w-5 h-5 text-green-600" />
+                <h2 className="text-lg font-bold text-gray-900">Payment Method</h2>
+              </div>
 
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <div className="space-y-3">
-                    {[
-                        { id: "gcash", title: "GCash", desc: "Pay via GCash mobile wallet", key: "gcash_qr", icon: <Smartphone className="w-5 h-5 text-blue-600" /> },
-                        { id: "paymaya", title: "Maya", desc: "Pay via Maya mobile wallet", key: "paymaya_qr", icon: <Smartphone className="w-5 h-5 text-green-600" /> },
-                        { id: "bpi", title: "BPI Bank Transfer", desc: "Transfer via BPI Online", key: "bpi_qr", icon: <Building2 className="w-5 h-5 text-red-600" /> },
-                        { id: "bdo", title: "BDO Bank Transfer", desc: "Transfer via BDO Online", key: "bdo_qr", icon: <Building2 className="w-5 h-5 text-yellow-600" /> },
-                        { id: "cod", title: "Cash on Delivery", desc: "Pay when order arrives", key: null, icon: <CreditCard className="w-5 h-5 text-gray-600" /> },
-                      ].map((method) => (
+              {/* ✅ Radio Buttons */}
+              {(() => {
+                const firstSeller = checkoutData[0]
+                const enabledMethods =
+                  sellerQRCodes[firstSeller?.seller_id]?.payment_qrs || {}
+
+                const availablePaymentOptions = [
+                  {
+                    id: "cod",
+                    title: "Cash on Delivery",
+                    desc: "Pay when your order arrives",
+                    icon: <CreditCard className="w-5 h-5 text-gray-600" />,
+                  },
+                  {
+                    id: "gcash",
+                    title: "GCash",
+                    desc: "Pay via GCash mobile wallet",
+                    icon: <Smartphone className="w-5 h-5 text-blue-600" />,
+                  },
+                  {
+                    id: "paymaya",
+                    title: "Maya",
+                    desc: "Pay via Maya mobile wallet",
+                    icon: <Smartphone className="w-5 h-5 text-green-600" />,
+                  },
+                  {
+                    id: "bpi",
+                    title: "BPI Bank Transfer",
+                    desc: "Transfer via BPI Online",
+                    icon: <Building2 className="w-5 h-5 text-red-600" />,
+                  },
+                  {
+                    id: "bdo",
+                    title: "BDO Bank Transfer",
+                    desc: "Transfer via BDO Online",
+                    icon: <Building2 className="w-5 h-5 text-yellow-600" />,
+                  },
+                ].filter((method) => method.id === "cod" || enabledMethods[method.id])
+
+                return (
+                  <RadioGroup
+                    value={paymentMethod}
+                    onValueChange={setPaymentMethod}
+                    className="space-y-3"
+                  >
+                    {availablePaymentOptions.length > 0 ? (
+                      availablePaymentOptions.map((method) => (
                         <div
                           key={method.id}
-                          className={`flex flex-col space-y-3 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer ${
-                            paymentMethod === method.id ? "border-blue-500 bg-blue-50" : ""
-                          }`}
-                          onClick={() => setPaymentMethod(method.id)}
+                          className="flex items-start gap-3 border rounded-lg p-3 hover:bg-gray-50"
                         >
-                          <div className="flex items-center space-x-3">
-                            <RadioGroupItem value={method.id} id={method.id} />
-                            <Label htmlFor={method.id} className="flex items-center gap-3 cursor-pointer flex-1">
+                          <RadioGroupItem value={method.id} id={method.id} />
+                          <div className="flex flex-col">
+                            <Label htmlFor={method.id} className="flex items-center gap-2">
                               {method.icon}
-                              <div>
-                                <p className="font-medium">{method.title}</p>
-                                <p className="text-xs text-gray-500">{method.desc}</p>
-                              </div>
+                              <span className="font-medium">{method.title}</span>
                             </Label>
+                            <p className="text-sm text-gray-500">{method.desc}</p>
                           </div>
-
-                          {/* ✅ Show seller QR codes */}
-                          {method.key &&
-                            checkoutData.map((seller) => {
-                              const qr = sellerQRCodes[seller.seller_id]?.[method.key]
-                              if (!qr) return null
-                              return (
-                                <div key={`${seller.seller_id}-${method.id}`} className="ml-8 border rounded-md p-2 bg-gray-50">
-                                  <p className="text-xs text-gray-600 mb-1 font-medium">
-                                    {seller.seller_name}’s {method.title} QR:
-                                  </p>
-                               <img
-                                  src={getFullImageUrl(qr)}
-                                  alt={`${method.title} QR`}
-                                  className="w-40 h-40 object-contain rounded-md border bg-white"
-                                  onError={(e) => ((e.target as HTMLImageElement).src = "/placeholder.png")}
-                                />
-
-                                </div>
-                              )
-                            })}
                         </div>
-                      ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">
+                        No payment methods available for this seller.
+                      </p>
+                    )}
+                  </RadioGroup>
+                )
+              })()}
 
+
+              <Separator className="my-4" />
+
+             {/* ✅ Display seller-specific QR codes */}
+              {checkoutData.map((seller) => {
+                const qrData = sellerQRCodes[seller.seller_id]?.payment_qrs || {}
+                const selectedQR = qrData[paymentMethod]
+
+                return (
+                  <div key={seller.seller_id} className="mt-4 space-y-3">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                      <Store className="w-4 h-4 text-green-600" />
+                      {seller.seller_name}
+                    </h3>
+
+                    {/* ✅ Hide QR if payment method is COD */}
+                    {paymentMethod === "cod" ? (
+                      <p className="text-sm text-gray-600 italic">
+                        Cash on Delivery selected — no QR code required.
+                      </p>
+                    ) : selectedQR ? (
+                      <div className="flex flex-col items-center justify-center border rounded-xl p-4 bg-gray-50 shadow-sm">
+                        <p className="text-sm font-medium mb-2 capitalize text-gray-700">
+                          {paymentMethod} QR Code
+                        </p>
+                        {/* ✅ Clickable QR */}
+                        <img
+                          src={getFullImageUrl(selectedQR)}
+                          alt={`${paymentMethod} QR`}
+                          onClick={() => setSelectedImage(getFullImageUrl(selectedQR))}
+                          className="w-full max-w-md h-auto object-contain rounded-xl border shadow-md bg-white cursor-pointer transition-transform hover:scale-105"
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">
+                        No {paymentMethod.toUpperCase()} QR uploaded for this seller.
+                      </p>
+                    )}
                   </div>
-                </RadioGroup>
-              </CardContent>
-            </Card>
+                )
+              })}
+
+            </CardContent>
+          </Card>
+
+          {/* ✅ Fullscreen image modal */}
+          {selectedImage && (
+            <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[9999]">
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 text-white text-3xl font-bold"
+              >
+                ×
+              </button>
+              <img
+                src={selectedImage}
+                alt="QR Fullscreen"
+                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+              />
+            </div>
+          )}
+
+
 
             {/* ORDER ITEMS */}
             <Card className="shadow-sm">

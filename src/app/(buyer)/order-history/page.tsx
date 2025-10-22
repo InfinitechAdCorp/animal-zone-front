@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2, Package, ShoppingBag } from "lucide-react"
+import { Loader2, Package, ShoppingBag, Store } from "lucide-react"
 import { getOrderHistory } from "@/lib/api" // ✅ make sure this function exists in your /lib/api.ts
+import { toast } from "sonner"
 
 export default function OrderHistoryPage() {
   const [loading, setLoading] = useState(true)
@@ -92,12 +93,22 @@ export default function OrderHistoryPage() {
                 {order.items?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="flex justify-between py-2 text-sm"
+                    className="flex flex-col py-2 text-sm"
                   >
-                    <span className="text-foreground">{item.name}</span>
-                    <span className="font-medium text-muted-foreground">
-                      ₱{item.price} × {item.quantity}
-                    </span>
+                    <div className="flex justify-between">
+                      <span className="text-foreground font-medium">{item.name}</span>
+                      <span className="font-medium text-muted-foreground">
+                        ₱{item.price} × {item.quantity}
+                      </span>
+                    </div>
+
+                    {/* ✅ Show store name */}
+                    {item.seller_name && (
+                      <div className="flex items-center text-xs text-muted-foreground mt-1">
+                        <Store className="h-3 w-3 mr-1 opacity-70" />
+                        {item.seller_name}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -109,7 +120,7 @@ export default function OrderHistoryPage() {
                 </span>
               </div>
 
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-between items-center mt-4">
                 <Button
                   variant="outline"
                   size="sm"
@@ -118,7 +129,53 @@ export default function OrderHistoryPage() {
                   <Package className="h-4 w-4" />
                   {order.status}
                 </Button>
+
+                {order.status.toLowerCase() === "pending" && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      toast("Cancel this order?", {
+                        description: "This action cannot be undone.",
+                        action: {
+                          label: "Confirm",
+                          onClick: async () => {
+                            try {
+                              const token = localStorage.getItem("authToken")
+                              const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/orders/${order.id}/cancel`, {
+                              method: "PATCH",
+                              headers: {
+                                "Authorization": `Bearer ${token}`,
+                                "Accept": "application/json",
+                                "Content-Type": "application/json",
+                              },
+                            });
+                              const data = await res.json()
+
+                              if (res.ok) {
+                                toast.success("Order cancelled successfully.")
+                                setOrders((prev) =>
+                                  prev.map((o) =>
+                                    o.id === order.id ? { ...o, status: "cancelled" } : o
+                                  )
+                                )
+                              } else {
+                                toast.error(`❌ ${data.message || "Failed to cancel order."}`)
+                              }
+                            } catch (error: any) {
+                              toast.error(`❌ Network or server error: ${error.message}`)
+                            }
+                          },
+                        },
+                      })
+                    }}
+
+                  >
+                    Cancel
+                  </Button>
+                )}
               </div>
+
             </CardContent>
           </Card>
         ))}

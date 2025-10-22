@@ -41,11 +41,18 @@ export default function SellerAccount() {
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
 
-    const formData = new FormData(e.currentTarget)
-    const enabled: string[] = []
+  // ✅ Initialize formData properly
+  const formData = new FormData(e.currentTarget)
+
+  // Optional: Debug output
+  for (const [key, value] of formData.entries()) {
+    console.log(key, value)
+  }
+
+  const enabled: string[] = []
 
     ;["gcash", "paymaya", "bpi", "bdo"].forEach((m) => {
       if (formData.get(`${m}_enabled`)) enabled.push(m)
@@ -134,7 +141,7 @@ export default function SellerAccount() {
             You can upload your QR codes for each selected method.
           </p>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {["gcash", "paymaya", "bpi", "bdo"].map((method) => (
                 <div key={method} className="border p-3 rounded-lg space-y-2">
